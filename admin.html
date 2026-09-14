@@ -45,8 +45,8 @@
 <main>
   <div id="vista-login" class="card">
     <h1>Acceso Admin</h1>
-    <p style="text-align:center;color:var(--texto-suave);margin-bottom:16px">IngresÃ¡ con tu email y contraseÃ±a de Supabase</p>
-    <div class="campo"><label for="login-email">Email</label><input id="login-email" type="email" placeholder="admin@ejemplo.com"></div>
+    <p style="text-align:center;color:var(--texto-suave);margin-bottom:16px">Ingresá con tu usuario y contraseña</p>
+    <div class="campo"><label for="login-email">Usuario</label><input id="login-email" type="text" placeholder="admin"></div>
     <div class="campo" style="margin-top:10px"><label for="login-pass">ContraseÃ±a</label><input id="login-pass" type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"></div>
     <p id="login-error" class="error oculto"></p>
     <div style="text-align:center;margin-top:16px"><button id="btn-login" class="btn-primario">Ingresar</button></div>
@@ -136,10 +136,11 @@ function renderPersonas(data){
 }
 
 $("#btn-login").addEventListener("click", async ()=>{
-  const email = $("#login-email").value.trim();
+  let email = $("#login-email").value.trim();
   const password = $("#login-pass").value;
+  if(email.toLowerCase() === "admin") email = "admin@imes.local";
   $("#login-error").classList.add("oculto");
-  if(!email || !password){ $("#login-error").textContent="Completa email y contraseÃ±a"; $("#login-error").classList.remove("oculto"); return; }
+  if(!email || !password){ $("#login-error").textContent="Completa usuario y contraseña"; $("#login-error").classList.remove("oculto"); return; }
   const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
   if(error){ $("#login-error").textContent=error.message; $("#login-error").classList.remove("oculto"); }
   else mostrarAdmin();
