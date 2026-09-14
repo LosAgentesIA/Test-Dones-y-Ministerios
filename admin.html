@@ -89,9 +89,8 @@
   <div id="vista-admin" class="oculto">
     <div class="card" style="margin-bottom:16px">
       <h2>Historial por Persona</h2>
-      <div style="display:flex;gap:8px;margin-bottom:12px">
-        <input id="busqueda" type="text" placeholder="Buscar por nombre o email..." style="flex:1;padding:10px 12px;border:1px solid var(--borde);border-radius:10px">
-        <button id="btn-export" class="btn-secundario">Exportar CSV</button>
+      <div style="margin-bottom:12px">
+        <input id="busqueda" type="text" placeholder="Buscar por nombre o email..." style="width:100%;padding:10px 12px;border:1px solid var(--borde);border-radius:10px">
       </div>
       <div id="lista-personas"></div>
       <p id="sin-datos" class="oculto" style="text-align:center;color:var(--texto-suave);padding:20px">No hay resultados aún.</p>
@@ -379,16 +378,6 @@ $("#btn-logout").addEventListener("click", async ()=>{
 });
 
 $("#busqueda").addEventListener("input", ()=> renderPersonas(resultadosCache));
-$("#btn-export").addEventListener("click", ()=>{
-  if(resultadosCache.length===0) return;
-  const rows = [["nombre","email","test_tipo","fecha","puntajes"]];
-  resultadosCache.forEach(r=> rows.push([r.nombre, r.email, r.test_tipo, r.fecha, JSON.stringify(r.puntajes).replace(/"/g,'""')]));
-  const csv = rows.map(r=> r.map(v=>`"${v}"`).join(",")).join("\n");
-  const blob = new Blob([csv], {type:"text/csv"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a"); a.href=url; a.download="historial.csv"; a.click();
-  URL.revokeObjectURL(url);
-});
 
 // Asegurar campos vacíos al cargar (evita autocompletado del navegador)
 document.getElementById("login-email").value = "";
