@@ -486,7 +486,7 @@ const DATOS = /*__DATOS__*/;
 
   const $ = (s) => document.querySelector(s);
 
-  const ETIQUETAS = { "5 Ministerios de Jesucristo": "Los 5 Ministerios de Jes\u00fas", "Otros Dones y Ministerios": "Otros Dones y Ministerios", "Otros dones": "Otros dones", "Otros ministerios": "Otros ministerios" };
+  const ETIQUETAS = { "5 Ministerios de Jesucristo": "Los 5 Ministerios de Jes\u00fas", "Otros Dones y Ministerios": "Otros Dones y Ministerios", "Otros dones": "Otros Dones", "Otros ministerios": "Otros Ministerios", "Otros Dones": "Otros Dones", "Otros Ministerios": "Otros Ministerios" };
   const etiquetaCategoria = (cat) => ETIQUETAS[cat] || ("Los " + cat);
 
   function formatearLeyenda9Dones(sub) {
@@ -500,7 +500,7 @@ const DATOS = /*__DATOS__*/;
   DATOS.forEach((d) => {
     let catKey = d.categoria;
     if (catKey === "Otros Dones y Ministerios") {
-      catKey = d.sub.toUpperCase().trim().startsWith("DON") ? "Otros dones" : "Otros ministerios";
+      catKey = d.sub.toUpperCase().trim().startsWith("DON") ? "Otros Dones" : "Otros Ministerios";
     }
     if (!ORDEN_FIJO[catKey]) ORDEN_FIJO[catKey] = [];
     if (!ORDEN_FIJO[catKey].includes(d.sub)) ORDEN_FIJO[catKey].push(d.sub);
@@ -586,24 +586,22 @@ const DATOS = /*__DATOS__*/;
   function construirOpciones() {
     const cont = document.getElementById("opciones-test");
     cont.innerHTML = "";
-    const cats = [];
-    DATOS.forEach((d) => { if (!cats.includes(d.categoria)) cats.push(d.categoria); });
-    cats.forEach((cat) => {
+    const tests = [
+      { id: "9 Dones del Esp\u00edritu Santo", label: "Los 9 Dones del Esp\u00edritu Santo" },
+      { id: "5 Ministerios de Jesucristo", label: "Los 5 Ministerios de Jes\u00fas" },
+      { id: "Otros Dones", label: "Otros Dones" },
+      { id: "Otros Ministerios", label: "Otros Ministerios" },
+      { id: "COMPLETO", label: "Test Completo" }
+    ];
+    tests.forEach((t) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "tarjeta-test";
-      b.dataset.test = cat;
-      b.innerHTML = '<span class="tarjeta-nombre">' + etiquetaCategoria(cat) + '</span>';
+      b.dataset.test = t.id;
+      b.innerHTML = '<span class="tarjeta-nombre">' + t.label + '</span>';
       b.addEventListener("click", () => seleccionarTarjeta(b));
       cont.appendChild(b);
     });
-    const bCompleto = document.createElement("button");
-    bCompleto.type = "button";
-    bCompleto.className = "tarjeta-test";
-    bCompleto.dataset.test = "COMPLETO";
-    bCompleto.innerHTML = '<span class="tarjeta-nombre">Test Completo</span>';
-    bCompleto.addEventListener("click", () => seleccionarTarjeta(bCompleto));
-    cont.appendChild(bCompleto);
   }
 
   function seleccionarTarjeta(tarjeta) {
@@ -623,15 +621,15 @@ const DATOS = /*__DATOS__*/;
 
   function mezclarCompleto(datos) {
     const porCat = {
-      "Otros dones": [],
+      "Otros Dones": [],
       "9 Dones del Esp\u00edritu Santo": [],
-      "Otros ministerios": [],
+      "Otros Ministerios": [],
       "5 Ministerios de Jesucristo": []
     };
     datos.forEach((d) => {
       let catKey = d.categoria;
       if (d.categoria === "Otros Dones y Ministerios") {
-        catKey = d.sub.toUpperCase().trim().startsWith("DON") ? "Otros dones" : "Otros ministerios";
+        catKey = d.sub.toUpperCase().trim().startsWith("DON") ? "Otros Dones" : "Otros Ministerios";
       }
       if (!porCat[catKey]) porCat[catKey] = [];
       porCat[catKey].push(d);
@@ -692,9 +690,15 @@ const DATOS = /*__DATOS__*/;
     }
     if (!ok) return;
 
-    preguntas = testSeleccionado === "COMPLETO"
-      ? mezclarCompleto(DATOS)
-      : DATOS.filter((d) => d.categoria === testSeleccionado);
+    if (testSeleccionado === "COMPLETO") {
+      preguntas = mezclarCompleto(DATOS);
+    } else if (testSeleccionado === "Otros Dones") {
+      preguntas = DATOS.filter((d) => d.categoria === "Otros Dones y Ministerios" && d.sub.toUpperCase().trim().startsWith("DON"));
+    } else if (testSeleccionado === "Otros Ministerios") {
+      preguntas = DATOS.filter((d) => d.categoria === "Otros Dones y Ministerios" && d.sub.toUpperCase().trim().startsWith("MINISTERIO"));
+    } else {
+      preguntas = DATOS.filter((d) => d.categoria === testSeleccionado);
+    }
     respuestas = new Array(preguntas.length).fill(null);
     indice = 0;
     renderPregunta();
@@ -861,7 +865,7 @@ const DATOS = /*__DATOS__*/;
       const v = respuestas[i] == null ? 0 : respuestas[i];
       let catKey = p.categoria;
       if (p.categoria === "Otros Dones y Ministerios") {
-        catKey = p.sub.toUpperCase().trim().startsWith("DON") ? "Otros dones" : "Otros ministerios";
+        catKey = p.sub.toUpperCase().trim().startsWith("DON") ? "Otros Dones" : "Otros Ministerios";
       }
       if (!porCategoria[catKey]) porCategoria[catKey] = [];
       let grupo = porCategoria[catKey].find((g) => g.sub === p.sub);
@@ -878,6 +882,8 @@ const DATOS = /*__DATOS__*/;
       "9 Dones del Espíritu Santo": "este es tu perfil de los 9 Dones del Espíritu Santo",
       "5 Ministerios de Jesucristo": "este es tu perfil de los 5 Ministerios de Jesucristo",
       "Otros Dones y Ministerios": "este es tu perfil de Otros Dones y Ministerios",
+      "Otros Dones": "este es tu perfil de Otros Dones",
+      "Otros Ministerios": "este es tu perfil de Otros Ministerios",
       "COMPLETO": "este es tu perfil de Dones y Ministerios"
     };
     document.getElementById("resultado-perfil").textContent = perfilMap[testSeleccionado] || "este es tu perfil de dones y ministerios:";
@@ -889,12 +895,12 @@ const DATOS = /*__DATOS__*/;
     const esCompleto = testSeleccionado === "COMPLETO";
     let cats;
     if (esCompleto) {
-      const ordenCompleto = ["5 Ministerios de Jesucristo", "9 Dones del Esp\u00edritu Santo", "Otros dones", "Otros ministerios"];
+      const ordenCompleto = ["5 Ministerios de Jesucristo", "9 Dones del Esp\u00edritu Santo", "Otros Dones", "Otros Ministerios"];
       cats = ordenCompleto.filter((c) => porCategoria[c]);
       if (cats.length === 0) cats = Object.keys(porCategoria);
     } else {
-      if (porCategoria["Otros dones"] && porCategoria["Otros ministerios"]) {
-        cats = ["Otros dones", "Otros ministerios"];
+      if (porCategoria["Otros Dones"] && porCategoria["Otros Ministerios"]) {
+        cats = ["Otros Dones", "Otros Ministerios"];
       } else {
         cats = Object.keys(porCategoria);
       }
