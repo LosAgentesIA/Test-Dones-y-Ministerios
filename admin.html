@@ -96,6 +96,15 @@
       <div id="lista-personas"></div>
       <p id="sin-datos" class="oculto" style="text-align:center;color:var(--texto-suave);padding:20px">No hay resultados aún.</p>
     </div>
+    <div id="vista-detalle" class="card oculto">
+      <h2>Detalle del Resultado</h2>
+      <p class="resultado-saludo">Gracias <strong id="detalle-nombre"></strong>, <span id="detalle-perfil"></span></p>
+      <div id="detalle-lista"></div>
+      <div style="text-align:center;margin-top:16px;display:flex;gap:12px;justify-content:center" class="no-print">
+        <button id="btn-descargar-pdf-detalle" class="btn-primario">Descargar PDF</button>
+        <button id="btn-cerrar-detalle" class="btn-secundario">Cerrar</button>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -294,7 +303,7 @@ function renderPersonas(data){
       const puntajesTxt = r.puntajes ? Object.entries(r.puntajes).map(([cat, arr])=> `${cat}: ${arr.map(x=>`${x.sub} ${x.total}/${x.max}`).join(', ')}`).join(' | ') : "";
       const el = document.createElement("div");
       el.className = "intento";
-      el.innerHTML = `<div><span class="badge-test">${r.test_tipo}</span> <span style="margin-left:8px;color:var(--texto-suave);font-size:.85rem">${fecha}</span><div class="puntajes">${puntajesTxt.slice(0,300)}${puntajesTxt.length>300?'...':''}</div></div><div style="display:flex;gap:6px"><button class="btn-secundario" style="font-size:.8rem;padding:6px 10px" onclick='event.stopPropagation(); window.verPdf && window.verPdf("${r.id}")'>PDF</button></div>`;
+      el.innerHTML = `<div><span class="badge-test">${r.test_tipo}</span> <span style="margin-left:8px;color:var(--texto-suave);font-size:.85rem">${fecha}</span><div class="puntajes">${puntajesTxt.slice(0,300)}${puntajesTxt.length>300?'...':''}</div></div><div style="display:flex;gap:6px"><button class="btn-secundario" style="font-size:.8rem;padding:6px 10px" onclick='event.stopPropagation(); window.verResultadosAdmin && window.verResultadosAdmin("${r.id}")'>Ver Resultados</button></div>`;
       hist.appendChild(el);
     });
     header.addEventListener("click", ()=> hist.classList.toggle("oculto"));
@@ -309,6 +318,46 @@ window.verPdf = async (id)=>{
   if(!r) return alert("No se encontró el resultado");
   renderPdf(r);
 };
+
+let resultadoSeleccionadoDetalle = null;
+window.verResultadosAdmin = (id)=>{
+  const r = resultadosCache.find(x=>x.id===id);
+  if(!r) return alert("No se encontró el resultado");
+  resultadoSeleccionadoDetalle = r;
+  const perfilMap={
+    "9 Dones del Espíritu Santo":"este es tu perfil de los 9 Dones del Espíritu Santo",
+    "5 Ministerios de Jesucristo":"este es tu perfil de los 5 Ministerios de Jesucristo",
+    "Otros Dones y Ministerios":"este es tu perfil de Otros Dones y Ministerios",
+    "COMPLETO":"este es tu perfil de Dones y Ministerios"
+  };
+  document.getElementById("detalle-nombre").textContent = r.nombre || "";
+  document.getElementById("detalle-perfil").textContent = perfilMap[r.test_tipo] || "este es tu perfil de dones y ministerios:";
+  const cont=document.getElementById("detalle-lista");
+  cont.innerHTML="";
+  const puntajes=r.puntajes||{};
+  const ordenCompleto=["5 Ministerios de Jesucristo","9 Dones del Espíritu Santo","Otros dones","Otros ministerios"];
+  let cats=Object.keys(puntajes);
+  if(r.test_tipo==="COMPLETO"){
+    cats=ordenCompleto.filter(c=>puntajes[c]);
+    if(cats.length===0) cats=Object.keys(puntajes);
+  } else if(puntajes["Otros dones"] && puntajes["Otros ministerios"]){
+    cats=["Otros dones","Otros ministerios"];
+  }
+  cats.forEach(cat=>{
+    const arr=puntajes[cat]||[];
+    if(arr.length===0) return;
+    cont.insertAdjacentHTML("beforeend", renderRadarAdmin(cat, arr));
+  });
+  document.getElementById("vista-detalle").classList.remove("oculto");
+  document.getElementById("vista-detalle").scrollIntoView({behavior:"smooth"});
+};
+
+document.getElementById("btn-descargar-pdf-detalle")?.addEventListener("click", ()=>{
+  if(resultadoSeleccionadoDetalle) renderPdf(resultadoSeleccionadoDetalle);
+});
+document.getElementById("btn-cerrar-detalle")?.addEventListener("click", ()=>{
+  document.getElementById("vista-detalle").classList.add("oculto");
+});
 
 $("#btn-login").addEventListener("click", async ()=>{
   let email = $("#login-email").value.trim();
