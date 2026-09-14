@@ -300,10 +300,9 @@ function renderPersonas(data){
     hist.className = "historial oculto";
     p.intentos.forEach(r=>{
       const fecha = new Date(r.fecha).toLocaleString();
-      const puntajesTxt = r.puntajes ? Object.entries(r.puntajes).map(([cat, arr])=> `${cat}: ${arr.map(x=>`${x.sub} ${x.total}/${x.max}`).join(', ')}`).join(' | ') : "";
       const el = document.createElement("div");
       el.className = "intento";
-      el.innerHTML = `<div><span class="badge-test">${r.test_tipo}</span> <span style="margin-left:8px;color:var(--texto-suave);font-size:.85rem">${fecha}</span><div class="puntajes">${puntajesTxt.slice(0,300)}${puntajesTxt.length>300?'...':''}</div></div><div style="display:flex;gap:6px"><button class="btn-secundario" style="font-size:.8rem;padding:6px 10px" onclick='event.stopPropagation(); window.verResultadosAdmin && window.verResultadosAdmin("${r.id}")'>Ver Resultados</button></div>`;
+      el.innerHTML = `<div><span class="badge-test">${r.test_tipo}</span> <span style="margin-left:8px;color:var(--texto-suave);font-size:.85rem">${fecha}</span></div><div style="display:flex;gap:6px"><button class="btn-secundario" style="font-size:.8rem;padding:6px 10px" onclick='event.stopPropagation(); window.verResultadosAdmin && window.verResultadosAdmin("${r.id}")'>Ver Resultados</button></div>`;
       hist.appendChild(el);
     });
     header.addEventListener("click", ()=> hist.classList.toggle("oculto"));
