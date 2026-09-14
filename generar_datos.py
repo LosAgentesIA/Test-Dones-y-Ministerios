@@ -427,9 +427,14 @@ PLANTILLA = r"""<!DOCTYPE html>
   <section id="vista-datos" class="vista">
     <h2>Datos del participante</h2>
     <div class="campo">
-      <label for="input-nombre">Tu nombre</label>
-      <input id="input-nombre" type="text" maxlength="60" placeholder="Escribe tu nombre" autocomplete="name">
+      <label for="input-nombre">Nombre</label>
+      <input id="input-nombre" type="text" maxlength="40" placeholder="Tu nombre" autocomplete="given-name">
       <p id="error-nombre" class="error oculto">Por favor ingresa tu nombre.</p>
+    </div>
+    <div class="campo">
+      <label for="input-apellido">Apellido</label>
+      <input id="input-apellido" type="text" maxlength="40" placeholder="Tu apellido" autocomplete="family-name">
+      <p id="error-apellido" class="error oculto">Por favor ingresa tu apellido.</p>
     </div>
     <div class="campo">
       <label for="input-email">Email</label>
@@ -512,6 +517,7 @@ const DATOS = /*__DATOS__*/;
   let respuestas = [];
   let indice = 0;
   let nombre = "";
+  let apellido = "";
   let email = "";
   let testSeleccionado = "";
 
@@ -538,12 +544,13 @@ const DATOS = /*__DATOS__*/;
 
   async function guardarResultado() {
     const email_norm = email.trim().toLowerCase();
+    const nombreCompleto = (nombre + " " + apellido).trim();
     const puntajes = {};
     Object.keys(cachePorCategoria || {}).forEach((cat) => {
       puntajes[cat] = cachePorCategoria[cat].map((g) => ({ sub: g.sub, total: g.total, max: g.max }));
     });
     const payload = {
-      nombre: nombre.trim(),
+      nombre: nombreCompleto,
       email: email.trim(),
       email_norm,
       test_tipo: testSeleccionado,
@@ -557,7 +564,7 @@ const DATOS = /*__DATOS__*/;
       return;
     }
     try {
-      await supabaseClient.from("personas").upsert({ nombre: nombre.trim(), email_norm }, { onConflict: "email_norm" });
+      await supabaseClient.from("personas").upsert({ nombre: nombreCompleto, email_norm }, { onConflict: "email_norm" });
       const { data: persona } = await supabaseClient.from("personas").select("id").eq("email_norm", email_norm).single();
       const persona_id = persona ? persona.id : null;
       await supabaseClient.from("resultados").insert({ persona_id, ...payload });
@@ -655,6 +662,7 @@ const DATOS = /*__DATOS__*/;
 
   document.getElementById("btn-comenzar").addEventListener("click", () => {
     nombre = document.getElementById("input-nombre").value.trim();
+    apellido = document.getElementById("input-apellido").value.trim();
     email = document.getElementById("input-email").value.trim();
     let ok = true;
     if (!nombre) {
@@ -662,6 +670,12 @@ const DATOS = /*__DATOS__*/;
       ok = false;
     } else {
       document.getElementById("error-nombre").classList.add("oculto");
+    }
+    if (!apellido) {
+      document.getElementById("error-apellido").classList.remove("oculto");
+      ok = false;
+    } else {
+      document.getElementById("error-apellido").classList.add("oculto");
     }
     const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     if (!email || !emailValido) {
@@ -859,7 +873,7 @@ const DATOS = /*__DATOS__*/;
       grupo.max += 3;
     });
     cachePorCategoria = porCategoria;
-    document.getElementById("resultado-nombre").textContent = nombre;
+    document.getElementById("resultado-nombre").textContent = (nombre + " " + apellido).trim();
     const perfilMap = {
       "9 Dones del Espíritu Santo": "este es tu perfil de los 9 Dones del Espíritu Santo",
       "5 Ministerios de Jesucristo": "este es tu perfil de los 5 Ministerios de Jesucristo",
@@ -927,11 +941,13 @@ const DATOS = /*__DATOS__*/;
     respuestas = [];
     indice = 0;
     nombre = "";
+    apellido = "";
     email = "";
     testSeleccionado = "";
     document.getElementById("input-nombre").value = "";
-    const emailInput = document.getElementById("input-email");
-    if (emailInput) emailInput.value = "";
+    const apellidoInput = document.getElementById("input-apellido");
+    if (apellidoInput) apellidoInput.value = "";
+    document.getElementById("input-email").value = "";
     document.querySelectorAll(".tarjeta-test").forEach((t) => t.classList.remove("seleccionada"));
     mostrarVista("inicio");
   });
