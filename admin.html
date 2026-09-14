@@ -31,6 +31,40 @@
   .badge-test{background:var(--acento-suave);color:var(--acento);border-radius:999px;padding:4px 10px;font-size:.8rem;font-weight:600}
   .puntajes{font-size:.85rem;color:var(--texto-suave);margin-top:4px}
   .acciones-admin{display:flex;gap:8px;justify-content:center;margin-top:16px}
+  /* Radar */
+  .grafico-bloque{margin-bottom:34px}
+  .grafico-bloque:last-child{margin-bottom:0}
+  .grafico-bloque h3{margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--borde);color:var(--acento);text-align:left}
+  .grafico-contenedor{display:flex;flex-direction:column;align-items:center;gap:14px}
+  .grafico-contenedor svg{width:100%;max-width:570px;height:auto;overflow:visible}
+  .leyenda-radar{display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:center;font-size:.86rem;color:var(--texto-suave)}
+  .leyenda-item{display:inline-flex;align-items:center;gap:6px;background:var(--acento-suave);border-radius:999px;padding:4px 10px}
+  .leyenda-punto{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .leyenda-item b{color:#0f172a;font-weight:800;background:#fff;border-radius:999px;padding:2px 7px;margin-left:2px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .leyenda-item.principal{background:var(--acento);color:#fff}
+  .leyenda-item.principal b{color:var(--acento);background:#fff}
+  .pdf-membrete{display:none}
+  #pdf-preview{display:none}
+  @media print{
+    body{background:#fff;padding:0;color:#000}
+    body *{visibility:hidden}
+    #pdf-preview, #pdf-preview *{visibility:visible}
+    #pdf-preview{display:block !important;position:absolute;left:0;top:0;width:100%;background:transparent !important}
+    #pdf-preview .resultado-imprimible{position:static;width:100%;border:none;box-shadow:none;padding:0;background:transparent !important;color:#000 !important}
+    #pdf-preview h2,#pdf-preview .resultado-saludo,#pdf-preview .grafico-bloque h3,#pdf-preview #pdf-nombre{color:#000 !important}
+    #pdf-preview .grafico-bloque h3{color:#3f6df0 !important}
+    #pdf-preview .leyenda-item{background:#eef2ff !important;color:#000 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    #pdf-preview .leyenda-item.principal{background:#3f6df0 !important;color:#fff !important}
+    #pdf-preview .leyenda-item b{background:#fff !important;color:#0f172a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    #pdf-preview .leyenda-item.principal b{background:#fff !important;color:#3f6df0 !important}
+    #pdf-preview svg{-webkit-print-color-adjust:exact;print-color-adjust:exact;max-width:440px !important}
+    #pdf-preview svg text{fill:#000 !important}
+    #pdf-preview .pdf-membrete{display:block !important;visibility:visible !important;text-align:center;font-weight:800;font-size:1.05rem;letter-spacing:.06em;text-transform:uppercase;color:#000 !important;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #3f6df0}
+    #pdf-preview .grafico-bloque{break-inside:avoid;page-break-inside:avoid}
+    #pdf-preview .grafico-bloque:not(:last-child){break-after:page;page-break-after:always}
+    .no-print{display:none !important}
+    header{display:none}
+  }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -64,6 +98,17 @@
     </div>
   </div>
 </main>
+
+<!-- PDF preview for printing -->
+<div id="pdf-preview" class="oculto">
+  <div class="resultado-imprimible" style="background:#fff;border:none;box-shadow:none;padding:24px;max-width:800px;margin:0 auto">
+    <div class="pdf-membrete">Instituto Ministerial del Espíritu Santo</div>
+    <h2>Resultados</h2>
+    <p class="resultado-saludo">Gracias <strong id="pdf-nombre"></strong>, <span id="pdf-perfil"></span></p>
+    <div id="pdf-lista"></div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://xstrpgjvflpajgcbzsai.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzdHJwZ2p2ZmxwYWpnY2J6c2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0MDU5MjYsImV4cCI6MjEwNDk4MTkyNn0.hynO7EE8zSTznCiUJ-9VwCrtLOu50kw_qIKn4pLiG4M";
@@ -71,6 +116,130 @@ const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_U
 
 const $ = s => document.querySelector(s);
 let resultadosCache = [];
+
+// Helpers for radar (copied from index.html)
+const ETIQUETAS = { "5 Ministerios de Jesucristo": "Los 5 Ministerios de Jesús", "Otros Dones y Ministerios": "Otros Dones y Ministerios", "Otros dones": "Otros dones", "Otros ministerios": "Otros ministerios" };
+const etiquetaCategoria = (cat) => ETIQUETAS[cat] || ("Los " + cat);
+function formatearLeyenda9Dones(sub){
+  const up=sub.toUpperCase();
+  if(up.includes("PALABRA")&&up.includes("SABIDURIA")) return "PALABRA DE SABIDURÍA";
+  if(up.includes("PALABRA")&&up.includes("REVELACION")) return "PALABRA DE REVELACIÓN";
+  return sub.replace(/^DON de /i,"").replace(/^DONES de /i,"").replace(/^DON del /i,"");
+}
+function acortarSub(sub){
+  const up=sub.toUpperCase();
+  if(up.includes("PALABRA")&&up.includes("SABIDURIA")) return "PALABRA DE SABIDURÍA";
+  if(up.includes("PALABRA")&&up.includes("REVELACION")) return "PALABRA DE REVELACIÓN";
+  return sub.replace(/^DON de /i,"").replace(/^DONES de /i,"").replace(/^MINISTERIO del /i,"").replace(/^MINISTERIO de /i,"").replace(/^DON del /i,"");
+}
+function renderRadarAdmin(cat, datos){
+  const n=datos.length; const cx=180, cy=180, R=125;
+  let svg='<svg viewBox="0 0 360 360" class="svg-radar" role="img" aria-label="Radar '+cat+'">';
+  for(let g=1; g<=15; g++){
+    const r=R*g/15; const isMajor=g%5===0;
+    svg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--borde)" stroke-width="'+(isMajor?1:0.6)+'" opacity="'+(isMajor?0.55:0.22)+'"/>';
+    if(isMajor) svg+='<text x="'+(cx+4)+'" y="'+(cy-r-2)+'" font-size="7.5" font-weight="600" fill="#000000" opacity="1">'+g+'</text>';
+  }
+  datos.forEach((d,i)=>{
+    const ang=(-90+i*360/n)*Math.PI/180;
+    const x2=cx+R*Math.cos(ang); const y2=cy+R*Math.sin(ang);
+    svg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+x2+'" y2="'+y2+'" stroke="var(--borde)" stroke-width="1" opacity="0.3"/>';
+  });
+  const ceros=datos.filter(d=>d.total===0).length;
+  const usarFiltro=ceros>=2;
+  const activos= usarFiltro ? datos.filter(d=>d.total>=1) : datos;
+  if(activos.length>=2){
+    const pts=activos.map(d=>{
+      const i=datos.findIndex(x=>x.sub===d.sub);
+      const ang=(-90+i*360/n)*Math.PI/180;
+      const r=R*(d.total/d.max||0);
+      return (cx+r*Math.cos(ang))+','+(cy+r*Math.sin(ang));
+    }).join(' ');
+    svg+='<polygon points="'+pts+'" fill="rgba(63,109,240,0.18)" stroke="#3f6df0" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+  } else if(!usarFiltro && datos.length>=2){
+    const pts=datos.map((d,i)=>{
+      const ang=(-90+i*360/n)*Math.PI/180;
+      const r=R*(d.total/d.max||0);
+      return (cx+r*Math.cos(ang))+','+(cy+r*Math.sin(ang));
+    }).join(' ');
+    svg+='<polygon points="'+pts+'" fill="rgba(63,109,240,0.18)" stroke="#3f6df0" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+  }
+  const puntosParaDibujar= usarFiltro ? activos : datos;
+  puntosParaDibujar.forEach(d=>{
+    const i=datos.findIndex(x=>x.sub===d.sub);
+    const ang=(-90+i*360/n)*Math.PI/180;
+    const r=R*(d.total/d.max||0);
+    const x=cx+r*Math.cos(ang); const y=cy+r*Math.sin(ang);
+    const col='hsl('+Math.round(i*360/n)+', 72%, 52%)';
+    svg+='<circle cx="'+x+'" cy="'+y+'" r="4.5" fill="'+col+'" stroke="#fff" stroke-width="1.6"/>';
+  });
+  datos.forEach((d,i)=>{
+    const ang=(-90+i*360/n)*Math.PI/180;
+    const x=cx+(R+18)*Math.cos(ang); const y=cy+(R+18)*Math.sin(ang);
+    const anchor=Math.cos(ang)>0.35?'start':Math.cos(ang)<-0.35?'end':'middle';
+    const label=acortarSub(d.sub);
+    const fs=n>12?'6.9':'7.8';
+    const needsWrap=label.length>14||label.includes(' Y ')||label.includes(' E ');
+    if(needsWrap){
+      let parts;
+      if(label.includes(' Y ')){const p=label.split(' Y ');parts=[p[0],'Y '+p.slice(1).join(' Y ')];}
+      else if(label.includes(' E ')){const p=label.split(' E ');parts=[p[0],'E '+p.slice(1).join(' E ')];}
+      else{const mid=Math.floor(label.length/2);let sp=label.lastIndexOf(' ',mid);if(sp===-1) sp=label.indexOf(' ',mid);if(sp!==-1)parts=[label.slice(0,sp),label.slice(sp+1)];else parts=[label];}
+      if(parts.length===2){
+        svg+='<text x="'+x+'" y="'+y+'" text-anchor="'+anchor+'" font-size="'+fs+'" font-weight="600" fill="var(--texto)"><tspan x="'+x+'" dy="-0.45em">'+parts[0]+'</tspan><tspan x="'+x+'" dy="1.15em">'+parts[1]+'</tspan></text>';
+      } else svg+='<text x="'+x+'" y="'+y+'" text-anchor="'+anchor+'" dominant-baseline="middle" font-size="'+fs+'" font-weight="600" fill="var(--texto)">'+label+'</text>';
+    } else svg+='<text x="'+x+'" y="'+y+'" text-anchor="'+anchor+'" dominant-baseline="middle" font-size="'+fs+'" font-weight="600" fill="var(--texto)">'+label+'</text>';
+  });
+  svg+='</svg>';
+  let html='<div class="grafico-bloque" data-cat="'+cat+'"><h3>'+etiquetaCategoria(cat)+'</h3><div class="grafico-contenedor">'+svg+'<div class="leyenda-radar">';
+  const ordenadosLeyenda=[...datos].sort((a,b)=>b.total-a.total);
+  ordenadosLeyenda.forEach((d,idxSorted)=>{
+    const fixedIdx=datos.findIndex(x=>x.sub===d.sub);
+    const dotBg='hsl('+Math.round(fixedIdx*360/datos.length)+', 72%, 52%)';
+    const principal=idxSorted===0?' principal':'';
+    const textoSub=cat==="9 Dones del Espíritu Santo"?formatearLeyenda9Dones(d.sub):d.sub;
+    html+='<span class="leyenda-item'+principal+'"><span class="leyenda-punto" style="background:'+dotBg+'"></span>'+textoSub+' <b>'+d.total+'/'+d.max+'</b></span>';
+  });
+  html+='</div></div></div>';
+  return html;
+}
+
+function renderPdf(resultado){
+  const perfilMap={
+    "9 Dones del Espíritu Santo":"este es tu perfil de los 9 Dones del Espíritu Santo",
+    "5 Ministerios de Jesucristo":"este es tu perfil de los 5 Ministerios de Jesucristo",
+    "Otros Dones y Ministerios":"este es tu perfil de Otros Dones y Ministerios",
+    "COMPLETO":"este es tu perfil de Dones y Ministerios"
+  };
+  const nombre = resultado.nombre || "";
+  const testTipo = resultado.test_tipo || "COMPLETO";
+  $("#pdf-nombre").textContent = nombre;
+  $("#pdf-perfil").textContent = perfilMap[testTipo] || "este es tu perfil de dones y ministerios:";
+  const cont=$("#pdf-lista");
+  cont.innerHTML="";
+  const puntajes = resultado.puntajes || {};
+  // Orden para completo: 5,9,Otros dones, Otros ministerios (como en index)
+  const ordenCompleto=["5 Ministerios de Jesucristo","9 Dones del Espíritu Santo","Otros dones","Otros ministerios"];
+  let cats = Object.keys(puntajes);
+  if(testTipo==="COMPLETO"){
+    cats = ordenCompleto.filter(c=>puntajes[c]);
+    if(cats.length===0) cats=Object.keys(puntajes);
+  } else if(puntajes["Otros dones"] && puntajes["Otros ministerios"]){
+    cats=["Otros dones","Otros ministerios"];
+  }
+  cats.forEach(cat=>{
+    const arr=puntajes[cat]||[];
+    if(arr.length===0) return;
+    cont.insertAdjacentHTML("beforeend", renderRadarAdmin(cat, arr));
+  });
+  // Mostrar preview y imprimir
+  const preview=$("#pdf-preview");
+  preview.classList.remove("oculto");
+  preview.style.display="block";
+  window.print();
+  // Ocultar de nuevo después de imprimir (pequeño delay para que el print dialogue capture)
+  setTimeout(()=>{ preview.style.display="none"; }, 500);
+}
 
 async function checkSession(){
   if(!supabaseClient) {
@@ -117,15 +286,15 @@ function renderPersonas(data){
     div.className = "persona";
     const header = document.createElement("div");
     header.className = "persona-header";
-    header.innerHTML = `<div><strong>${p.nombre}</strong><br><span>${p.email}</span></div><span>${p.intentos.length} intento(s) â–¾</span>`;
+    header.innerHTML = `<div><strong>${p.nombre}</strong><br><span>${p.email}</span></div><span>${p.intentos.length} intento(s) ▾</span>`;
     const hist = document.createElement("div");
     hist.className = "historial oculto";
     p.intentos.forEach(r=>{
       const fecha = new Date(r.fecha).toLocaleString();
-      const puntajesTxt = r.puntajes ? Object.entries(r.puntajes).map(([cat, arr])=> `${cat}: ${arr.map(x=>`${x.sub.split(' ').pop()} ${x.total}/${x.max}`).join(', ')}`).join(' | ') : "";
+      const puntajesTxt = r.puntajes ? Object.entries(r.puntajes).map(([cat, arr])=> `${cat}: ${arr.map(x=>`${x.sub} ${x.total}/${x.max}`).join(', ')}`).join(' | ') : "";
       const el = document.createElement("div");
       el.className = "intento";
-      el.innerHTML = `<div><span class="badge-test">${r.test_tipo}</span> <span style="margin-left:8px;color:var(--texto-suave);font-size:.85rem">${fecha}</span><div class="puntajes">${puntajesTxt.slice(0,300)}${puntajesTxt.length>300?'...':''}</div></div><button class="btn-secundario" style="font-size:.8rem;padding:6px 10px" onclick='alert(${JSON.stringify(JSON.stringify(r.puntajes)).slice(0,200)})'>Ver</button>`;
+      el.innerHTML = `<div><span class="badge-test">${r.test_tipo}</span> <span style="margin-left:8px;color:var(--texto-suave);font-size:.85rem">${fecha}</span><div class="puntajes">${puntajesTxt.slice(0,300)}${puntajesTxt.length>300?'...':''}</div></div><div style="display:flex;gap:6px"><button class="btn-secundario" style="font-size:.8rem;padding:6px 10px" onclick='event.stopPropagation(); window.verPdf && window.verPdf("${r.id}")'>PDF</button></div>`;
       hist.appendChild(el);
     });
     header.addEventListener("click", ()=> hist.classList.toggle("oculto"));
@@ -134,6 +303,12 @@ function renderPersonas(data){
     cont.appendChild(div);
   });
 }
+
+window.verPdf = async (id)=>{
+  const r = resultadosCache.find(x=>x.id===id);
+  if(!r) return alert("No se encontró el resultado");
+  renderPdf(r);
+};
 
 $("#btn-login").addEventListener("click", async ()=>{
   let email = $("#login-email").value.trim();
@@ -175,4 +350,3 @@ checkSession();
 </script>
 </body>
 </html>
-
