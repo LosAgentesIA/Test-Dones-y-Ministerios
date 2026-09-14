@@ -1,0 +1,7 @@
+[build]
+  command = "python generar_datos.py"
+  publish = "."
+
+# Para Netlify, configurar en Dashboard > Environment variables:
+# SUPABASE_URL = https://xstrpgjvflpajgcbzsai.supabase.co
+# SUPABASE_ANON_KEY = (copiar de Supabase Dashboard > Project Settings > API)

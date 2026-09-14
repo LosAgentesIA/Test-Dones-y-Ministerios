@@ -1,0 +1,171 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Historial de Tests</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#f5f6f8;--superficie:#fff;--texto:#1b2433;--texto-suave:#5d6675;--borde:#e2e5ea;--acento:#3f6df0;--acento-suave:#e8eeff;--radio:16px;--sombra:0 12px 32px rgba(23,34,66,.08)}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--texto);min-height:100vh;padding:24px 16px;display:flex;flex-direction:column;align-items:center}
+  header{width:100%;max-width:900px;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+  .marca{font-weight:700;letter-spacing:.04em;color:var(--texto-suave);font-size:.82rem;text-transform:uppercase}
+  main{width:100%;max-width:900px}
+  .card{background:var(--superficie);border:1px solid var(--borde);border-radius:var(--radio);box-shadow:var(--sombra);padding:24px}
+  h1{font-size:1.6rem;text-align:center;margin-bottom:8px}
+  h2{font-size:1.25rem;margin-bottom:12px;color:var(--acento)}
+  .campo label{display:block;font-weight:600;margin-bottom:6px}
+  .campo input{width:100%;padding:12px 14px;border:2px solid var(--borde);border-radius:10px;font-size:1rem;font-family:inherit}
+  .campo input:focus{outline:none;border-color:var(--acento)}
+  .btn-primario{background:var(--acento);color:#fff;border:none;border-radius:999px;padding:12px 24px;font-weight:700;cursor:pointer}
+  .btn-secundario{background:transparent;border:1px solid var(--borde);border-radius:999px;padding:10px 18px;font-weight:600;cursor:pointer}
+  .error{color:#e5484d;font-size:.9rem;margin-top:6px}
+  .oculto{display:none !important}
+  .persona{border:1px solid var(--borde);border-radius:12px;padding:16px;margin-bottom:12px;background:var(--superficie)}
+  .persona-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+  .persona-header strong{font-size:1.05rem}
+  .persona-header span{color:var(--texto-suave);font-size:.9rem}
+  .historial{margin-top:12px;border-top:1px solid var(--borde);padding-top:12px}
+  .intento{padding:10px 0;border-bottom:1px solid var(--borde);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .intento:last-child{border-bottom:none}
+  .badge-test{background:var(--acento-suave);color:var(--acento);border-radius:999px;padding:4px 10px;font-size:.8rem;font-weight:600}
+  .puntajes{font-size:.85rem;color:var(--texto-suave);margin-top:4px}
+  .acciones-admin{display:flex;gap:8px;justify-content:center;margin-top:16px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+<header>
+  <span class="marca">Instituto Ministerial del EspÃ­ritu Santo â€” Admin</span>
+  <div style="display:flex;gap:8px;align-items:center">
+    <a href="index.html" style="font-size:.82rem;color:var(--texto-suave);text-decoration:none;border:1px solid var(--borde);padding:6px 12px;border-radius:999px;">Volver al Test</a>
+    <button id="btn-logout" class="btn-secundario oculto">Salir</button>
+  </div>
+</header>
+<main>
+  <div id="vista-login" class="card">
+    <h1>Acceso Admin</h1>
+    <p style="text-align:center;color:var(--texto-suave);margin-bottom:16px">IngresÃ¡ con tu email y contraseÃ±a de Supabase</p>
+    <div class="campo"><label for="login-email">Email</label><input id="login-email" type="email" placeholder="admin@ejemplo.com"></div>
+    <div class="campo" style="margin-top:10px"><label for="login-pass">ContraseÃ±a</label><input id="login-pass" type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"></div>
+    <p id="login-error" class="error oculto"></p>
+    <div style="text-align:center;margin-top:16px"><button id="btn-login" class="btn-primario">Ingresar</button></div>
+  </div>
+
+  <div id="vista-admin" class="oculto">
+    <div class="card" style="margin-bottom:16px">
+      <h2>Historial por Persona</h2>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input id="busqueda" type="text" placeholder="Buscar por nombre o email..." style="flex:1;padding:10px 12px;border:1px solid var(--borde);border-radius:10px">
+        <button id="btn-export" class="btn-secundario">Exportar CSV</button>
+      </div>
+      <div id="lista-personas"></div>
+      <p id="sin-datos" class="oculto" style="text-align:center;color:var(--texto-suave);padding:20px">No hay resultados aÃºn.</p>
+    </div>
+  </div>
+</main>
+<script>
+const SUPABASE_URL = "https://xstrpgjvflpajgcbzsai.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzdHJwZ2p2ZmxwYWpnY2J6c2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0MDU5MjYsImV4cCI6MjEwNDk4MTkyNn0.hynO7EE8zSTznCiUJ-9VwCrtLOu50kw_qIKn4pLiG4M";
+const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+const $ = s => document.querySelector(s);
+let resultadosCache = [];
+
+async function checkSession(){
+  if(!supabaseClient) {
+    $("#login-error").textContent = "Configura SUPABASE_ANON_KEY en admin.html";
+    $("#login-error").classList.remove("oculto");
+    return;
+  }
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if(session) mostrarAdmin();
+}
+
+async function mostrarAdmin(){
+  $("#vista-login").classList.add("oculto");
+  $("#vista-admin").classList.remove("oculto");
+  $("#btn-logout").classList.remove("oculto");
+  await cargarHistorial();
+}
+
+async function cargarHistorial(){
+  const { data, error } = await supabaseClient.from("resultados").select("*").order("fecha", { ascending: false });
+  if(error){ $("#sin-datos").textContent = "Error: "+error.message; $("#sin-datos").classList.remove("oculto"); return; }
+  resultadosCache = data || [];
+  if(resultadosCache.length===0){ $("#sin-datos").classList.remove("oculto"); $("#lista-personas").innerHTML=""; return; }
+  $("#sin-datos").classList.add("oculto");
+  renderPersonas(resultadosCache);
+}
+
+function renderPersonas(data){
+  const filtro = ($("#busqueda").value||"").toLowerCase().trim();
+  const agrupado = {};
+  data.forEach(r=>{
+    const key = (r.email_norm || r.email||"").toLowerCase();
+    if(filtro && !(r.nombre.toLowerCase().includes(filtro) || key.includes(filtro))) return;
+    if(!agrupado[key]) agrupado[key] = { nombre: r.nombre, email: r.email, intentos: [] };
+    agrupado[key].intentos.push(r);
+  });
+  const cont = $("#lista-personas");
+  cont.innerHTML = "";
+  const keys = Object.keys(agrupado).sort((a,b)=> agrupado[b].intentos[0].fecha.localeCompare(agrupado[a].intentos[0].fecha));
+  if(keys.length===0){ cont.innerHTML='<p style="text-align:center;color:var(--texto-suave)">Sin coincidencias</p>'; return; }
+  keys.forEach(key=>{
+    const p = agrupado[key];
+    const div = document.createElement("div");
+    div.className = "persona";
+    const header = document.createElement("div");
+    header.className = "persona-header";
+    header.innerHTML = `<div><strong>${p.nombre}</strong><br><span>${p.email}</span></div><span>${p.intentos.length} intento(s) â–¾</span>`;
+    const hist = document.createElement("div");
+    hist.className = "historial oculto";
+    p.intentos.forEach(r=>{
+      const fecha = new Date(r.fecha).toLocaleString();
+      const puntajesTxt = r.puntajes ? Object.entries(r.puntajes).map(([cat, arr])=> `${cat}: ${arr.map(x=>`${x.sub.split(' ').pop()} ${x.total}/${x.max}`).join(', ')}`).join(' | ') : "";
+      const el = document.createElement("div");
+      el.className = "intento";
+      el.innerHTML = `<div><span class="badge-test">${r.test_tipo}</span> <span style="margin-left:8px;color:var(--texto-suave);font-size:.85rem">${fecha}</span><div class="puntajes">${puntajesTxt.slice(0,300)}${puntajesTxt.length>300?'...':''}</div></div><button class="btn-secundario" style="font-size:.8rem;padding:6px 10px" onclick='alert(${JSON.stringify(JSON.stringify(r.puntajes)).slice(0,200)})'>Ver</button>`;
+      hist.appendChild(el);
+    });
+    header.addEventListener("click", ()=> hist.classList.toggle("oculto"));
+    div.appendChild(header);
+    div.appendChild(hist);
+    cont.appendChild(div);
+  });
+}
+
+$("#btn-login").addEventListener("click", async ()=>{
+  const email = $("#login-email").value.trim();
+  const password = $("#login-pass").value;
+  $("#login-error").classList.add("oculto");
+  if(!email || !password){ $("#login-error").textContent="Completa email y contraseÃ±a"; $("#login-error").classList.remove("oculto"); return; }
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if(error){ $("#login-error").textContent=error.message; $("#login-error").classList.remove("oculto"); }
+  else mostrarAdmin();
+});
+
+$("#btn-logout").addEventListener("click", async ()=>{
+  await supabaseClient.auth.signOut();
+  $("#vista-admin").classList.add("oculto");
+  $("#vista-login").classList.remove("oculto");
+  $("#btn-logout").classList.add("oculto");
+});
+
+$("#busqueda").addEventListener("input", ()=> renderPersonas(resultadosCache));
+$("#btn-export").addEventListener("click", ()=>{
+  if(resultadosCache.length===0) return;
+  const rows = [["nombre","email","test_tipo","fecha","puntajes"]];
+  resultadosCache.forEach(r=> rows.push([r.nombre, r.email, r.test_tipo, r.fecha, JSON.stringify(r.puntajes).replace(/"/g,'""')]));
+  const csv = rows.map(r=> r.map(v=>`"${v}"`).join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href=url; a.download="historial.csv"; a.click();
+  URL.revokeObjectURL(url);
+});
+
+checkSession();
+</script>
+</body>
+</html>
+

@@ -1,0 +1,1785 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test de Dones y Ministerios</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f6f8;
+    --superficie: #ffffff;
+    --texto: #1b2433;
+    --texto-suave: #5d6675;
+    --borde: #e2e5ea;
+    --acento: #3f6df0;
+    --acento-fuerte: #2f57d0;
+    --acento-suave: #e8eeff;
+    --sombra: 0 12px 32px rgba(23, 34, 66, 0.08);
+    --radio: 16px;
+  }
+
+  [data-tema="oscuro"] {
+    --bg: #0f1522;
+    --superficie: #1a2233;
+    --texto: #eef1f7;
+    --texto-suave: #a2abc0;
+    --borde: #2a3448;
+    --acento: #6f97ff;
+    --acento-fuerte: #4f7bf0;
+    --acento-suave: #232d45;
+    --sombra: 0 12px 32px rgba(0, 0, 0, 0.4);
+  }
+
+  html { color-scheme: light; }
+  [data-tema="oscuro"] { color-scheme: dark; }
+
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--texto);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  header {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .marca {
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--texto-suave);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+  }
+
+  #btn-tema {
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: 999px;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    color: var(--texto);
+    transition: background 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
+  }
+  #btn-tema:hover { border-color: var(--acento); transform: translateY(-1px); }
+  #btn-tema svg { width: 20px; height: 20px; }
+  .icono-sol { display: none; }
+  .icono-luna { display: block; }
+  [data-tema="oscuro"] .icono-sol { display: block; }
+  [data-tema="oscuro"] .icono-luna { display: none; }
+
+  main { width: 100%; max-width: 720px; }
+
+  .vista { display: none; }
+  .vista.activa {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    animation: aparecer 0.35s ease both;
+  }
+
+  @keyframes aparecer {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h1 { font-size: clamp(1.7rem, 5vw, 2.6rem); line-height: 1.15; text-align: center; }
+  h2 { font-size: clamp(1.4rem, 4vw, 2rem); text-align: center; }
+  h3 { font-size: 1.15rem; }
+
+  .subtitulo { text-align: center; color: var(--texto-suave); font-size: 1.05rem; margin: 10px 0 28px; }
+
+  .btn-primario {
+    background: var(--acento);
+    color: #ffffff;
+    border: none;
+    border-radius: 999px;
+    padding: 16px 36px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(63, 109, 240, 0.28);
+    transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  }
+  .btn-primario:hover:not(:disabled) { background: var(--acento-fuerte); transform: translateY(-2px); }
+  .btn-primario:active:not(:disabled) { transform: translateY(0); }
+  .btn-primario:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+  .btn-secundario {
+    background: transparent;
+    color: var(--texto);
+    border: 1px solid var(--borde);
+    border-radius: 999px;
+    padding: 14px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  }
+  .btn-secundario:hover:not(:disabled) { border-color: var(--acento); transform: translateY(-1px); }
+  .btn-secundario:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .acciones { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+  /* ---- Inicio ---- */
+  #vista-inicio { align-items: center; justify-content: center; text-align: center; min-height: calc(100vh - 160px); gap: 8px; width: 100%; }
+  #vista-inicio h1, #vista-inicio .subtitulo, #vista-inicio #btn-iniciar { margin-left: auto; margin-right: auto; }
+  #vista-inicio .subtitulo { margin-bottom: 40px; max-width: 520px; }
+
+  /* ---- Datos ---- */
+  #vista-datos { gap: 14px; }
+  #vista-datos h3 { margin-top: 12px; }
+
+  .campo label { display: block; font-weight: 600; font-size: 1rem; margin-bottom: 8px; }
+  .campo input {
+    width: 100%;
+    font-size: 1.15rem;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 2px solid var(--borde);
+    background: var(--superficie);
+    color: var(--texto);
+    font-family: inherit;
+    transition: border-color 0.2s ease;
+  }
+  .campo input:focus { outline: none; border-color: var(--acento); }
+
+  .error { color: #e5484d; font-size: 0.92rem; margin-top: 6px; }
+  .oculto { display: none !important; }
+
+  .opciones-test { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+
+  .tarjeta-test {
+    background: var(--superficie);
+    border: 2px solid var(--borde);
+    border-radius: var(--radio);
+    padding: 20px 18px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--texto);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 88px;
+    transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+  .tarjeta-test:hover { border-color: var(--acento); transform: translateY(-2px); box-shadow: var(--sombra); }
+  .tarjeta-test.seleccionada { border-color: var(--acento); background: var(--acento-suave); box-shadow: var(--sombra); }
+  .tarjeta-nombre { display: block; font-weight: 700; font-size: 1.1rem; text-align: center; margin-bottom: 0; }
+  .tarjeta-info { color: var(--texto-suave); font-size: 0.9rem; }
+
+  #vista-datos .btn-primario { align-self: center; margin-top: 18px; }
+
+  /* ---- Test ---- */
+  #vista-test { gap: 20px; }
+
+  .progreso { display: flex; flex-direction: column; gap: 10px; }
+  .progreso span { color: var(--texto-suave); font-size: 0.95rem; font-weight: 600; text-align: center; }
+
+  .barra-fondo { background: var(--borde); border-radius: 999px; height: 10px; overflow: hidden; }
+  .barra-llena { background: var(--acento); height: 100%; width: 0; border-radius: 999px; transition: width 0.4s ease; }
+
+  .pregunta-card {
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    padding: clamp(28px, 6vw, 48px);
+    text-align: center;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pregunta-card.animar { animation: aparecer 0.35s ease both; }
+
+  .afirmacion { font-size: clamp(1.25rem, 2.6vw, 1.7rem); line-height: 1.5; }
+
+  .botones-respuesta { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+  .btn-respuesta {
+    background: var(--superficie);
+    border: 2px solid var(--borde);
+    border-radius: 14px;
+    padding: 18px 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: inherit;
+    color: var(--texto);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  }
+  .btn-respuesta:hover { border-color: var(--acento); transform: translateY(-2px); }
+  .btn-respuesta.seleccionada { border-color: var(--acento); background: var(--acento-suave); }
+
+  /* ---- Resultados ---- */
+  #vista-resultados { gap: 20px; }
+
+  .resultado-imprimible {
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    padding: clamp(24px, 5vw, 40px);
+  }
+  .resultado-saludo { text-align: center; color: var(--texto-suave); margin: 8px 0 24px; }
+
+  .selector-categorias { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 14px 0 22px; }
+  .selector-categorias button {
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--texto);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .selector-categorias button:hover { border-color: var(--acento); transform: translateY(-1px); }
+  .selector-categorias button.activo { background: var(--acento); color: #fff; border-color: var(--acento); box-shadow: 0 4px 12px rgba(63,109,240,0.25); }
+
+  .grafico-bloque { margin-bottom: 34px; }
+  .grafico-bloque:last-child { margin-bottom: 0; }
+  .grafico-bloque h3 {
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--borde);
+    color: var(--acento);
+    text-align: left;
+  }
+  .grafico-contenedor { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .grafico-contenedor svg { width: 100%; max-width: 570px; height: auto; overflow: visible; }
+  .leyenda-radar { display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; font-size: 0.86rem; color: var(--texto-suave); }
+  .leyenda-item { display: inline-flex; align-items: center; gap: 6px; background: var(--acento-suave); border-radius: 999px; padding: 4px 10px; }
+  .leyenda-punto { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .leyenda-item b { color: #0f172a; font-weight: 800; background: #fff; border-radius: 999px; padding: 2px 7px; margin-left: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .leyenda-item.principal { background: var(--acento); color: #fff; }
+  .leyenda-item.principal b { color: var(--acento); background: #fff; }
+  .badge {
+    background: var(--acento);
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-left: 8px;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  .pdf-membrete { display: none; }
+
+  /* ---- Impresion ---- */
+  @media print {
+    body { background: #ffffff; padding: 0; color: #000000; }
+    body * { visibility: hidden; }
+    .resultado-imprimible, .resultado-imprimible * { visibility: visible; }
+    .resultado-imprimible {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+      background: transparent !important;
+      color: #000000 !important;
+    }
+    .resultado-imprimible h2,
+    .resultado-imprimible .resultado-saludo,
+    .resultado-imprimible .grafico-bloque h3,
+    .resultado-imprimible #resultado-nombre { color: #000000 !important; }
+    .resultado-imprimible .grafico-bloque h3 { color: #3f6df0 !important; }
+    .resultado-imprimible .leyenda-item { background: #eef2ff !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .resultado-imprimible .leyenda-item.principal { background: #3f6df0 !important; color: #fff !important; }
+    .resultado-imprimible .leyenda-item b { background: #fff !important; color: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .resultado-imprimible .leyenda-item.principal b { background: #fff !important; color: #3f6df0 !important; }
+    .resultado-imprimible svg { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 440px !important; }
+    .resultado-imprimible svg text { fill: #000000 !important; }
+    .grafico-bloque.oculto { display: block !important; visibility: visible !important; }
+    .pdf-membrete {
+      display: block !important;
+      visibility: visible !important;
+      text-align: center;
+      font-weight: 800;
+      font-size: 1.05rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #000000 !important;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #3f6df0;
+    }
+    .grafico-bloque { break-inside: avoid; page-break-inside: avoid; }
+    .grafico-bloque:not(:last-child) { break-after: page; page-break-after: always; }
+    .no-print { display: none !important; }
+    header { display: none; }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+<header>
+  <span class="marca">Instituto Ministerial del EspÃ­ritu Santo</span>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <a href="admin.html" class="no-print" style="font-size:0.82rem; color:var(--texto-suave); text-decoration:none; border:1px solid var(--borde); padding:6px 12px; border-radius:999px;">Admin</a>
+    <button id="btn-tema" class="no-print" aria-label="Cambiar modo claro u oscuro" title="Cambiar modo">
+    <svg class="icono-sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+    </svg>
+    <svg class="icono-luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+    </svg>
+  </button>
+  </div>
+</header>
+
+<main>
+
+  <section id="vista-inicio" class="vista activa">
+    <h1>Test de Dones y Ministerios</h1>
+    <p class="subtitulo">Identifica los dones del Esp&iacute;ritu Santo y los ministerios en los que puedes servir mejor.</p>
+    <button id="btn-iniciar" class="btn-primario">Iniciar Test</button>
+  </section>
+
+  <section id="vista-datos" class="vista">
+    <h2>Datos del participante</h2>
+    <div class="campo">
+      <label for="input-nombre">Tu nombre</label>
+      <input id="input-nombre" type="text" maxlength="60" placeholder="Escribe tu nombre" autocomplete="name">
+      <p id="error-nombre" class="error oculto">Por favor ingresa tu nombre.</p>
+    </div>
+    <div class="campo">
+      <label for="input-email">Email</label>
+      <input id="input-email" type="email" maxlength="100" placeholder="tu@email.com" autocomplete="email">
+      <p id="error-email" class="error oculto">Por favor ingresa un email vÃ¡lido.</p>
+    </div>
+    <h3>Elige un test</h3>
+    <div id="opciones-test" class="opciones-test"></div>
+    <p id="error-test" class="error oculto">Por favor elige un test.</p>
+    <button id="btn-comenzar" class="btn-primario">Comenzar</button>
+  </section>
+
+  <section id="vista-test" class="vista">
+    <div class="progreso">
+      <span id="pregunta-num">Pregunta 1 de 1</span>
+      <div class="barra-fondo"><div id="progreso-barra" class="barra-llena"></div></div>
+    </div>
+    <div id="pregunta-card" class="pregunta-card">
+      <p id="afirmacion" class="afirmacion"></p>
+    </div>
+    <div id="botones-respuesta" class="botones-respuesta"></div>
+    <div class="acciones">
+      <button id="btn-volver" class="btn-secundario">Volver</button>
+      <button id="btn-siguiente" class="btn-primario" disabled>Siguiente</button>
+    </div>
+  </section>
+
+  <section id="vista-resultados" class="vista">
+    <div class="resultado-imprimible">
+      <div class="pdf-membrete">Instituto Ministerial del EspÃ­ritu Santo</div>
+      <h2>Resultados</h2>
+      <p class="resultado-saludo">Gracias <strong id="resultado-nombre"></strong>, <span id="resultado-perfil">este es tu perfil de dones y ministerios:</span></p>
+      <div id="selector-categorias" class="selector-categorias no-print oculto"></div>
+      <div id="resultado-lista"></div>
+    </div>
+    <div class="acciones no-print">
+      <button id="btn-pdf" class="btn-primario">Descargar PDF</button>
+      <button id="btn-reiniciar" class="btn-secundario">Volver a empezar</button>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const DATOS = [
+ {
+  "num": 1,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de PROFECIA",
+  "afirmacion": "Durante la alabanza he dado mensajes que otros han dicho haberles traído esperanza, confianza y paz."
+ },
+ {
+  "num": 2,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DONES de SANIDADES",
+  "afirmacion": "Al ministrarles personalmente a los enfermos estos se han sanado."
+ },
+ {
+  "num": 3,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de HACER MILAGROS",
+  "afirmacion": "El Señor me ha usado para obrar milagros y he hecho que sucedan cosas que de acuerdo con la naturaleza sería imposible que sucedieran."
+ },
+ {
+  "num": 4,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de FE",
+  "afirmacion": "Es fácil para mí confiar en el Señor con absoluta seguridad durante un período largo de tiempo aunque no haya una manifestación visible de la respuesta de mi oración."
+ },
+ {
+  "num": 5,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de la PALABRA de REVELACION",
+  "afirmacion": "Durante una reunión o un servicio de la iglesia he recibido en mi espíritu los nombres de enfermedades específicas a medida que el Señor sanaba de estos mismos males."
+ },
+ {
+  "num": 6,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de la PALABRA de SABIDURIA",
+  "afirmacion": "He recibido en mi espíritu una palabra de dirección relacionada con algo del futuro, mostrándome la forma en que me debo preparar para ello y cumpliéndose esta palabra después, comprobándome así la verdad de ella."
+ },
+ {
+  "num": 7,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de DISCERNIMIENTO de ESPIRITUS",
+  "afirmacion": "He visto un ángel del Señor en un sueño o visión y he recibido en éste un mensaje de ánimo o de advertencia."
+ },
+ {
+  "num": 8,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de INTERPRETACION de LENGUAS",
+  "afirmacion": "He interpretado un mensaje dado en lenguas y esta interpretación ha traído edificación, exhortación y consolación."
+ },
+ {
+  "num": 9,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de DIVERSAS CLASES de LENGUAS",
+  "afirmacion": "He recibido el bautismo en el Espíritu Santo y continúo hablando en lenguas."
+ },
+ {
+  "num": 10,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de PROFECIA",
+  "afirmacion": "En ocasiones he compartido con otras personas mensajes o consejos urgentes que más tarde me han dicho que fueron una respuesta directa a sus oraciones."
+ },
+ {
+  "num": 11,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DONES de SANIDADES",
+  "afirmacion": "He visitado a los enfermos, ungiéndolos con aceite y he visto cómo el poder de Jesucristo los ha sanado."
+ },
+ {
+  "num": 12,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de HACER MILAGROS",
+  "afirmacion": "En ocasiones mientras he estado compartiendo me he sentido como Elías, en que he sentido la habilidad sobrenatural para pedir allí mismo una señal para probar el amor y el poder de Dios y El me ha contestado."
+ },
+ {
+  "num": 13,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de FE",
+  "afirmacion": "Debido a una fuerte convicción interior sobre la voluntad de Dios para cierta ocasión he dado una orden en público para que cosas específicas sucedan y Dios lo ha hecho."
+ },
+ {
+  "num": 14,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de la PALABRA de REVELACION",
+  "afirmacion": "Durante mis tiempos de oración en que estoy intercediendo por alguien el Señor me ha revelado cosas acerca de esa persona de las cuales yo no tenía conocimiento natural."
+ },
+ {
+  "num": 15,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de la PALABRA de SABIDURIA",
+  "afirmacion": "Cuando he tenido que tomar decisiones sabias rápidamente en tiempos de tribulación, he recibido una palabra sencilla de guía indicándome lo que debo hacer y cómo hacerlo."
+ },
+ {
+  "num": 16,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de DISCERNIMIENTO de ESPIRITUS",
+  "afirmacion": "He visto espíritus malignos y he tenido conocimiento de su naturaleza y su propósito sabiendo cuándo era necesaria la liberación."
+ },
+ {
+  "num": 17,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de INTERPRETACION de LENGUAS",
+  "afirmacion": "El Señor me ha usado en el don de hablar en lenguas y para dar la interpretación."
+ },
+ {
+  "num": 18,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de DIVERSAS CLASES de LENGUAS",
+  "afirmacion": "He hablado un mensaje a la iglesia en un idioma desconocido para mí y que nunca había aprendido."
+ },
+ {
+  "num": 19,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de PROFECIA",
+  "afirmacion": "He recibido la inspiración del Espíritu Santo para exaltar a Jesucristo a través del don de profecía."
+ },
+ {
+  "num": 20,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DONES de SANIDADES",
+  "afirmacion": "Personalmente he sido sanado y he sido un instrumento para que otro haya sido sanado."
+ },
+ {
+  "num": 21,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de HACER MILAGROS",
+  "afirmacion": "El Señor a través de mi ministerio ha recreado ciertos órganos destruidos en cuerpos enfermos que antes no había en ellos."
+ },
+ {
+  "num": 22,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de FE",
+  "afirmacion": "Me he visto en situaciones peligrosas en que los demás han temido, pero yo he tenido una paz perfecta y les he dado la confianza en la fidelidad de Dios para protegernos."
+ },
+ {
+  "num": 23,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de la PALABRA de REVELACION",
+  "afirmacion": "He tenido un sueño o una interpretación de mí mismo que más tarde resultó ser cierto(a)."
+ },
+ {
+  "num": 24,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de la PALABRA de SABIDURIA",
+  "afirmacion": "Cuando dos (2) cristianos han estado divididos por diferencia de opiniones, el Señor me ha dado un tercer punto de vista sobre el cual todos podemos estar de acuerdo."
+ },
+ {
+  "num": 25,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de DISCERNIMIENTO de ESPIRITUS",
+  "afirmacion": "Aunque no haya visto un ángel ni un demonio, sí he percibido la presencia de ellos, haciendo esto que yo pudiera ministrar eficazmente."
+ },
+ {
+  "num": 26,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de INTERPRETACION de LENGUAS",
+  "afirmacion": "Aunque no suelo dar la interpretación a las lenguas creo que sería capaz si nadie más lo hicieran."
+ },
+ {
+  "num": 27,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de DIVERSAS CLASES de LENGUAS",
+  "afirmacion": "Durante mi tiempo personal de oración yo le oro y le hablo a mi Padre en un idioma nunca antes aprendido."
+ },
+ {
+  "num": 28,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de PROFECIA",
+  "afirmacion": "He escrito mensajes, poemas, canciones de inspiración dadas directamente a mí durante mi tiempo devocional con el Señor."
+ },
+ {
+  "num": 29,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DONES de SANIDADES",
+  "afirmacion": "He orado para sacar espíritus malignos de personas y he visto sanidades instantáneas sin haber tenido que orar específicamente por sanidad."
+ },
+ {
+  "num": 30,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de HACER MILAGROS",
+  "afirmacion": "Dios me ha usado como un instrumento para cambiar circunstancias imposibles, como portador de las bendiciones de Dios en provisiones, protección, sanidad, y juicio sobrenaturales."
+ },
+ {
+  "num": 31,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de FE",
+  "afirmacion": "Por la seguridad que tengo en la voluntad de Dios para mí he podido soportar situaciones de grandes presiones económicas cuando aun mis amigos y familiares han tratado de desanimarme."
+ },
+ {
+  "num": 32,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de la PALABRA de REVELACION",
+  "afirmacion": "Durante el tiempo de consejería o de liberación el Señor me ha revelado el pecado o el espíritu que le estaba causando opresión."
+ },
+ {
+  "num": 33,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de la PALABRA de SABIDURIA",
+  "afirmacion": "En momentos de persecución a causa del evangelio he recibido una palabra de sabiduría para resolver acusaciones y dudas."
+ },
+ {
+  "num": 34,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de DISCERNIMIENTO de ESPIRITUS",
+  "afirmacion": "Me ha tocado defender a la iglesia de personas que han tenido grandes carismas (dones) y que doctrinalmente han enseñado principios bíblicos pero que han tenido influencia de espíritus falsos de error, decepción y orgullo que otros no han visto."
+ },
+ {
+  "num": 35,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de INTERPRETACION de LENGUAS",
+  "afirmacion": "Tengo una unción profética para hablar en forma simbólica al interpretar un mensaje en lenguas."
+ },
+ {
+  "num": 36,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de DIVERSAS CLASES de LENGUAS",
+  "afirmacion": "Dios me ha llamado a interceder en palabras y en idiomas que no entiendo."
+ },
+ {
+  "num": 37,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de PROFECIA",
+  "afirmacion": "En cierta ocasión sentí tener un mensaje profético para la iglesia pero me dio temor darlo."
+ },
+ {
+  "num": 38,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DONES de SANIDADES",
+  "afirmacion": "Aunque tengo un don de sanidad, parece que el Señor se limitara a sanar únicamente una clase de enfermedad a través de mí."
+ },
+ {
+  "num": 39,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de HACER MILAGROS",
+  "afirmacion": "Al usar el poder milagroso de protección de Dios para controlar circunstancias, he evitado situaciones de grave peligro y de posible muerte."
+ },
+ {
+  "num": 40,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de FE",
+  "afirmacion": "Si después de esperar mucho tiempo para que se cumpla la Palabra de Dios en mi vida y no se realiza, no por eso busco otras alternativas, ni trato de manipular las circunstancias para hacer que me sucedan."
+ },
+ {
+  "num": 41,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de la PALABRA de REVELACION",
+  "afirmacion": "Al conocer a alguien por primera vez Dios me reveló cosas referentes a esa persona que me protegieron a mí y a toda la comunidad cristiana."
+ },
+ {
+  "num": 42,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de la PALABRA de SABIDURIA",
+  "afirmacion": "A veces he oído la voz audible de Dios que me habla con palabras y no sólo con pensamientos."
+ },
+ {
+  "num": 43,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de DISCERNIMIENTO de ESPIRITUS",
+  "afirmacion": "He podido discernir en una persona que otros han exaltado y reconocido que tiene gran autoridad, un espíritu de dominio, control y manipulación sutil de sus voluntades."
+ },
+ {
+  "num": 44,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de INTERPRETACION de LENGUAS",
+  "afirmacion": "He cantado la interpretación a un mensaje dado en lenguas con una melodía y un cántico espiritual que nunca antes había aprendido."
+ },
+ {
+  "num": 45,
+  "categoria": "9 Dones del Espíritu Santo",
+  "sub": "DON de DIVERSAS CLASES de LENGUAS",
+  "afirmacion": "Desde que recibí el bautismo en el Espíritu Santo me han cambiado las lenguas varias veces."
+ },
+ {
+  "num": 46,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del APOSTOL",
+  "afirmacion": "El Señor se me ha aparecido, llamándome a dejar mi país y establecer iglesias en tierras lejanas."
+ },
+ {
+  "num": 47,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del MAESTRO",
+  "afirmacion": "Dios me ha ungido para recibir entendimiento fresco de las Escrituras y para enseñar a otros."
+ },
+ {
+  "num": 48,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del PROFETA",
+  "afirmacion": "El Señor me ha dado los 3 dones de revelación y el de profecía y me ha llamado a un ministerio de tiempo completo."
+ },
+ {
+  "num": 49,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del EVANGELISTA",
+  "afirmacion": "Siento mayor satisfacción predicando y compartiendo el mensaje de salvación que enseñándoles y entrenando a cristianos más maduros en las verdades profundas de la Palabra."
+ },
+ {
+  "num": 50,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del PASTOR",
+  "afirmacion": "Otros cristianos me ven a mí como a un padre y me rodean para recibir dirección, edificación y corrección."
+ },
+ {
+  "num": 51,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del APOSTOL",
+  "afirmacion": "He aprendido un nuevo idioma y he simentado discípulos cristianos en otros países quienes están enseñándoles a otros lo aprendido a través de mí."
+ },
+ {
+  "num": 52,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del MAESTRO",
+  "afirmacion": "El Señor me ha llamado a viajar y a enseñar su Palabra de tiempo completo en distintos lugares."
+ },
+ {
+  "num": 53,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del PROFETA",
+  "afirmacion": "Con frecuencia recibo y comparto revelaciones especiales concernientes a la voluntad de Dios para toda la iglesia."
+ },
+ {
+  "num": 54,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del EVANGELISTA",
+  "afirmacion": "No importa dónde está o lo que está haciendo, parece que nunca puedo parar de predicarles de Cristo a los inconversos y de orar con ellos por su arrepentimiento para que reciban su salvación."
+ },
+ {
+  "num": 55,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del PASTOR",
+  "afirmacion": "Mi vida cristiana, mi matrimonio, mis hijos, mi empleo, son un testimonio y un ejemplo que otros pueden imitar."
+ },
+ {
+  "num": 56,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del APOSTOL",
+  "afirmacion": "He hecho el trabajo del evangelista ganando almas, el del pastor, alimentando y cuidando, el del maestro instruyendo y enseñando y el del profeta confirmando sus dones y llamados en la iglesia local."
+ },
+ {
+  "num": 57,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del MAESTRO",
+  "afirmacion": "Cuando enseño la Biblia, el Espíritu Santo me da ilustraciones y ejemplos sencillos (parábolas) para explicar verdades complicadas."
+ },
+ {
+  "num": 58,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del PROFETA",
+  "afirmacion": "Cuando ministro en iglesias nuevas el Espíritu Santo me usa para exhortarles por medio de palabras proféticas que confirman la guía divina que ellos ya habían recibido anteriormente."
+ },
+ {
+  "num": 59,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del EVANGELISTA",
+  "afirmacion": "Aunque es evidente que donde yo predique sigue un avivamiento con sanidades milagrosas, no tengo el menor deseo de enseñarles después ni de formar iglesias."
+ },
+ {
+  "num": 60,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del PASTOR",
+  "afirmacion": "Veo al pueblo de Dios como ovejas y Dios me ha llamado a alimentarlas, guiarlas, sanarlas y corregirlas."
+ },
+ {
+  "num": 61,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del APOSTOL",
+  "afirmacion": "He reunido un equipo de otros ministros (incluyendo profetas, pastores, maestros y evangelistas) para trabajar conmigo bajo mi liderazgo para establecer y reproducir iglesias locales."
+ },
+ {
+  "num": 62,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del MAESTRO",
+  "afirmacion": "Cuando enseño, el Señor me da cosas espontáneamente que no tenía incluido en mis notas."
+ },
+ {
+  "num": 63,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del PROFETA",
+  "afirmacion": "Dios me ha revelado personalmente por medio de sueños, visiones, voces audibles o visitaciones de ángeles los sucesos por venir."
+ },
+ {
+  "num": 64,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del EVANGELISTA",
+  "afirmacion": "Me es fácil acercarme a una persona desconocida e iniciar una conversación con ella sobre Jesucristo y su plan de salvación."
+ },
+ {
+  "num": 65,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del PASTOR",
+  "afirmacion": "Dios me ha dado un ministerio especial de su Palabra que ha sido reconocido por varios ministros de Dios."
+ },
+ {
+  "num": 66,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del APOSTOL",
+  "afirmacion": "En el pasado he establecido por lo menos una iglesia que no existía anteriormente y a través de mi liderazgo ha reproducido sus propios ministerios y discípulos."
+ },
+ {
+  "num": 67,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del MAESTRO",
+  "afirmacion": "He enseñado a un grupo de creyentes que ahora se encuentran enseñando a otros lo que han aprendido. Soy maestro de los maestros."
+ },
+ {
+  "num": 68,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del PROFETA",
+  "afirmacion": "Dios me ha enviado específicamente a un lugar, a una persona o a una iglesia para darles un mensaje profético específico que ha requerido que ellos tomen una decisión de su parte."
+ },
+ {
+  "num": 69,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del EVANGELISTA",
+  "afirmacion": "Recibo constantes invitaciones de los cristianos para hablar en grupos de oración, reuniones de iglesia , campañas y predicar el mensaje de salvación."
+ },
+ {
+  "num": 70,
+  "categoria": "5 Ministerios de Jesucristo",
+  "sub": "MINISTERIO del PASTOR",
+  "afirmacion": "Me gustaría tener la responsabilidad espiritual de atender los problemas, las quejas, los fracasos y las necesidades de consejería de un grupo pequeño de personas."
+ },
+ {
+  "num": 71,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de ENSENANZA",
+  "afirmacion": "Tengo la capacidad de enseñar a las personas un sistema claro y metódico para aprender las verdades de la Biblia."
+ },
+ {
+  "num": 72,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de EXHORTACION",
+  "afirmacion": "He animado en forma verbal a personas desanimadas o con actitudes de crítica hacia la iglesia de la cual se han apartado, para hacerles regresar y restaurarse en su amor por el Señor y su respeto hacia su iglesia y sus líderes."
+ },
+ {
+  "num": 73,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de DAR",
+  "afirmacion": "Creo en la veracidad del diezmar y de dar ofrendas generosamente y con regularidad a la obra de Dios. Doy con regularidad 10% de mi sueldo y también una ofrenda a la iglesia fielmente."
+ },
+ {
+  "num": 74,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de AYUDA",
+  "afirmacion": "He ayudado a líderes en sus quehaceres diarios para aliviarles esta carga, permitiéndoles así dedicarse a sus prioridades ministeriales."
+ },
+ {
+  "num": 75,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de MISERICORDIA",
+  "afirmacion": "Me inquietan y siento interés por los sentimientos y las emociones de los que están enfermos, solos, con hambre, los viejos; y me gustaría ayudarles en la forma que fuera posible."
+ },
+ {
+  "num": 76,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de HOSPITALIDAD",
+  "afirmacion": "Cuando ha habido alguien necesitado yo he hecho provisión de comida y de dormida a esa persona."
+ },
+ {
+  "num": 77,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de LIDERAZGO",
+  "afirmacion": "He trabajado eficazmente en un ministerio habiendo entrenado a otros para reemplazarme y llevar a cabo el mismo trabajo con éxito."
+ },
+ {
+  "num": 78,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de GOBERNAR",
+  "afirmacion": "Puedo organizar horarios, conferencias, trabajo de oficina etc. con más facilidad que una enseñanza bíblica."
+ },
+ {
+  "num": 79,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de ORACION E INTERCESION",
+  "afirmacion": "Siento mayor satisfacción espiritual al pasar tiempo a solas con el Señor en oración, que pasándolo en otras actividades cristianas."
+ },
+ {
+  "num": 80,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de CONSEJERIA",
+  "afirmacion": "Al estarle ministrando a una persona tengo la capacidad de ver a través de los frutos superficiales de su problema a la raíz que los está causando."
+ },
+ {
+  "num": 81,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de LIBERACION",
+  "afirmacion": "Me es fácil discernir la presencia, la naturaleza y la actividad de cualquier clase de espíritu, ángel o demonio."
+ },
+ {
+  "num": 82,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de ALABANZA Y ADORACION",
+  "afirmacion": "Soy músico y he sentido que el Señor me está llamando para consagrarle mis dones a El para su gloria."
+ },
+ {
+  "num": 83,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de EVANGELISMO",
+  "afirmacion": "Lo que me produce mayor gozo es encontrar gente que esté lista para rendirle su vida a Jesucristo y orar conmigo."
+ },
+ {
+  "num": 84,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de NINOS",
+  "afirmacion": "Aunque no tengo experiencia de haber enseñado a niños, me gusta trabajar con ellos."
+ },
+ {
+  "num": 85,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de VISITAR",
+  "afirmacion": "Tengo más éxito en mi ministerio hacia los demás, hablándoles individualmente que hablando en público a grupos grandes."
+ },
+ {
+  "num": 86,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO del MISIONERO",
+  "afirmacion": "El Señor me ha llamado personalmente para viajar a otro país y servir a otros ministerios estableciendo nuevas iglesias con los dones espirituales que tengo."
+ },
+ {
+  "num": 87,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de ENSENANZA",
+  "afirmacion": "Aunque no recibo personalmente enseñanzas, Dios me ha ungido para enseñar a otros las verdades que me han enseñado a mí."
+ },
+ {
+  "num": 88,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de EXHORTACION",
+  "afirmacion": "Le he hablado con autoridad a algún hermano cristiano para darle corrección y éste la recibió bien y produjo frutos de arrepentimiento."
+ },
+ {
+  "num": 89,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de DAR",
+  "afirmacion": "Mi familia tiene más prosperidad económica de la que necesita y si lo decidiéramos hacer, podríamos dar más dinero para sostener a un obrero cristiano en el ministerio."
+ },
+ {
+  "num": 90,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de AYUDA",
+  "afirmacion": "Aunque no me gusta predicar, sí me gusta ministrar en otras áreas como en trabajo de oficina, imprenta, video, audio, libros, mantenimiento, limpieza, aseo o mensajería."
+ },
+ {
+  "num": 91,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de MISERICORDIA",
+  "afirmacion": "Yo podría dedicar un tiempo especial de cada semana para visitar enfermos en hospitales y compartirles el evangelio con el poder sanador de Jesucristo."
+ },
+ {
+  "num": 92,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de HOSPITALIDAD",
+  "afirmacion": "Nuestra casa está siempre a la orden para que la iglesia la use cuando haya necesidad."
+ },
+ {
+  "num": 93,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de LIDERAZGO",
+  "afirmacion": "Es fácil para mí compartir responsabilidades de liderazgo con aquellas personas que demuestran tener habilidades de liderazgo."
+ },
+ {
+  "num": 94,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de GOBERNAR",
+  "afirmacion": "De acuerdo con las visiones y las metas de mi iglesia soy capaz de hacer planes prácticos para lograrlas."
+ },
+ {
+  "num": 95,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de ORACION E INTERCESION",
+  "afirmacion": "El Señor me mostró a mí personalmente que me había dado el ministerio de oración e intercesión."
+ },
+ {
+  "num": 96,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de CONSEJERIA",
+  "afirmacion": "Por medio de mi estudio personal y de meditar en la Palabra, he recibido entendimiento para aplicarla en una forma práctica a cualquier problema."
+ },
+ {
+  "num": 97,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de LIBERACION",
+  "afirmacion": "Por la enseñanza adecuada que he recibido sobre liberación se qué hacer en momentos de crisis."
+ },
+ {
+  "num": 98,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de ALABANZA Y ADORACION",
+  "afirmacion": "Durante la adoración el Señor ha llenado mi espíritu con una canción y una melodía nunca antes aprendida por mí mismo."
+ },
+ {
+  "num": 99,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de EVANGELISMO",
+  "afirmacion": "Me gustaría salir con frecuencia con otros cristianos para compartir el evangelio en las calles, las cárceles y los hospitales."
+ },
+ {
+  "num": 100,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de NINOS",
+  "afirmacion": "Al enseñar a los niños tengo la habilidad de explicarles un concepto espiritual de distintas formas hasta que ellos lo entiendan."
+ },
+ {
+  "num": 101,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de VISITAR",
+  "afirmacion": "Tengo la facilidad, la suavidad y el amor para acercarme a toda clase de personas y ganar su favor haciéndoles sentirse amadas y aceptadas."
+ },
+ {
+  "num": 102,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO del MISIONERO",
+  "afirmacion": "He trabajado en otro país dentro de alguna capacidad ministerial asistiendo al desarrollo y al crecimiento de la iglesia nacional."
+ },
+ {
+  "num": 103,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de ENSENANZA",
+  "afirmacion": "Mi deseo es enseñar a los demás en grupos pequeños aquellas verdades que el liderazgo me ha enseñado a mí."
+ },
+ {
+  "num": 104,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de EXHORTACION",
+  "afirmacion": "Verbalmente he estimulado la fe de otros que dudaban y he sido motivo de inspiración para que ellos hicieran cosas mayores de las que ellos podían creer hacer en Cristo."
+ },
+ {
+  "num": 105,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de DAR",
+  "afirmacion": "Estoy dispuesto a negarme el derecho de tener algunas cosas materiales que no son de suma necesidad en mi vida para poderle dar más dinero a la iglesia y a la obra del Señor."
+ },
+ {
+  "num": 106,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de AYUDA",
+  "afirmacion": "No me gusta organizar, pero si alguien planea el trabajo yo trabajo lo planeado."
+ },
+ {
+  "num": 107,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de MISERICORDIA",
+  "afirmacion": "Deseo trabajar con los pobres distribuyendo ropa y comida a ellos."
+ },
+ {
+  "num": 108,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de HOSPITALIDAD",
+  "afirmacion": "Aunque no sé enseñar, quisiera ofrecer mi casa para que otro lo hiciera allí."
+ },
+ {
+  "num": 109,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de LIDERAZGO",
+  "afirmacion": "He trabajado con un líder de la iglesia y deseo enseñar, visitar a los enfermos y aconsejar como él lo hace."
+ },
+ {
+  "num": 110,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de GOBERNAR",
+  "afirmacion": "Sería capaz de coordinar eficazmente las horas y los lugares donde se llevarían a cabo los ministerios de exhortación, servicio, enseñanza, visitación, consejería, evangelismo y misericordia con un buen funcionamiento."
+ },
+ {
+  "num": 111,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de ORACION E INTERCESION",
+  "afirmacion": "Dios me ha dado una unción y una gracia especial para pasar varias horas al día en oración por los demás."
+ },
+ {
+  "num": 112,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de CONSEJERIA",
+  "afirmacion": "Al estar aconsejando en situaciones difíciles, dependo más de los tres dones de revelación del Espíritu que de los métodos de sicoanálisis y en la siquiatría."
+ },
+ {
+  "num": 113,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de LIBERACION",
+  "afirmacion": "Creo tener un ministerio de liberación y estaría dispuesto a dedicarle muchas horas semanales a los oprimidos y a los atados."
+ },
+ {
+  "num": 114,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de ALABANZA Y ADORACION",
+  "afirmacion": "Me gustaría dirigir la alabanza en un grupo familiar o en un estudio bíblico."
+ },
+ {
+  "num": 115,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de EVANGELISMO",
+  "afirmacion": "Yo conozco el plan básico de salvación de que Jesucristo fue mi sustituto y podría explicárselo claramente a otro individuo."
+ },
+ {
+  "num": 116,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de NINOS",
+  "afirmacion": "He visto que los niños me obedecen fácilmente cuando les doy una orden."
+ },
+ {
+  "num": 117,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de VISITAR",
+  "afirmacion": "No se me conoce como persona orgullosa, egocéntrica, discutidora, ni insensible a los sentimientos de los demás."
+ },
+ {
+  "num": 118,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO del MISIONERO",
+  "afirmacion": "He trabajado en otro país usando mi profesión como un frente o entrada a través de evangelizar. (Médico, educador, mecánico, técnico, etc.)."
+ },
+ {
+  "num": 119,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de ENSENANZA",
+  "afirmacion": "Paso muchas horas semanales orando, investigando, y meditando en las notas que he tomado durante las enseñanzas."
+ },
+ {
+  "num": 120,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de EXHORTACION",
+  "afirmacion": "Soy una persona optimista. Tengo la habilidad de ver más allá de lo que es la persona ahora, para ver lo que podría ser en Cristo y puedo motivarlos para que decidan moverse del punto A, al punto B, y de allí al C, etc."
+ },
+ {
+  "num": 121,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de DAR",
+  "afirmacion": "Reconozco que Jesucristo me ha dado el don de ganar dinero y sé que tendré que rendir cuentas a El si lo malgasto en mí mismo en vez de en su obra."
+ },
+ {
+  "num": 122,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de AYUDA",
+  "afirmacion": "Reconozco con facilidad las cosas prácticas que puedo hacer y encuentro satisfacción en hacer estas cosas en secreto, sin buscar que me alaben ni me agradezcan."
+ },
+ {
+  "num": 123,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de MISERICORDIA",
+  "afirmacion": "Yo siento que no es suficiente aconsejar y enseñar sino que tengo que salir a visitar a otros y darles comida y vestido cuando vea la necesidad."
+ },
+ {
+  "num": 124,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de HOSPITALIDAD",
+  "afirmacion": "Tengo el don de hacer sentir a los demás aceptados y cómodos en mi casa para que puedan hacer lo que ellos quieran sin temor de ofenderme."
+ },
+ {
+  "num": 125,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de LIDERAZGO",
+  "afirmacion": "Otros cristianos han reconocido en mí la habilidad de discernir y reconocer a las personas que Dios está escogiendo y puedo motivarlos con amor a trabajar en sumisión a mi autoridad espiritual."
+ },
+ {
+  "num": 126,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de GOBERNAR",
+  "afirmacion": "Se enseñarle distintas funciones a otros para que puedan reemplazarme en mi oficio buscando para esto personas que no se aferren a su función ni a su puesto sino que se motivan para avanzar."
+ },
+ {
+  "num": 127,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de ORACION E INTERCESION",
+  "afirmacion": "Al interceder por otros he llegado a sentir las emociones mismas del Espíritu de Dios como la tristeza, el dolor, el rechazo; el gozo por la persona por la cual he estado orando y esto permitió que yo pudiera identificarme con ellos."
+ },
+ {
+  "num": 128,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de CONSEJERIA",
+  "afirmacion": "Cuando alguien está compartiendo su problema conmigo he aprendido que es más importante escuchar los motivos y las actitudes detrás de lo que están diciendo más que las mismas palabras que dicen."
+ },
+ {
+  "num": 129,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de LIBERACION",
+  "afirmacion": "Estoy interesado en la liberación y la consejería y quisiera aprender más sobre ésto."
+ },
+ {
+  "num": 130,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de ALABANZA Y ADORACION",
+  "afirmacion": "Es muy fácil para mí adorar al Señor en lenguas solo o en público."
+ },
+ {
+  "num": 131,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de EVANGELISMO",
+  "afirmacion": "Yo comprendo y creo que en Cristo toda persona tiene derecho a la salvación, la sanidad, la liberación y al Espíritu Santo."
+ },
+ {
+  "num": 132,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de NINOS",
+  "afirmacion": "Sé crear un ambiente de expectativa y emoción para despertar el interés de los niños a escuchar y a participar."
+ },
+ {
+  "num": 133,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de VISITAR",
+  "afirmacion": "Conozco los elementos básicos de una vida Cristo - céntrica y su provisión de salvación, sanidad, liberación y el Espíritu Santo."
+ },
+ {
+  "num": 134,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO del MISIONERO",
+  "afirmacion": "Aunque nunca he trabajado en otro país, estoy absolutamente seguro de que el Señor me ha llamado a llevar mi profesión a alguna parte nueva para ayudar a iniciar una nueva Comunidad."
+ },
+ {
+  "num": 135,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de ENSENANZA",
+  "afirmacion": "Desde que aprendí a usar una concordancia y un diccionario bíblico, gozo más ahora al investigar en temas y doctrinas por mi cuenta."
+ },
+ {
+  "num": 136,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de EXHORTACION",
+  "afirmacion": "Al enseñar la Palabra a individuos o a un grupo de personas, me interesa más que la están practicando y poniendo por obra que sólo estén tomando notas."
+ },
+ {
+  "num": 137,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de DAR",
+  "afirmacion": "Siempre estoy buscando la forma de ayudar a suplir las necesidades económicas de otros y me gustaría trabajar en un programa de acción social dentro de la iglesia."
+ },
+ {
+  "num": 138,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de AYUDA",
+  "afirmacion": "Siento carga cuando veo que el pastor está ocupándose en quehaceres en los cuales yo le podría ayudar."
+ },
+ {
+  "num": 139,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de MISERICORDIA",
+  "afirmacion": "Me identifico tanto con los sufrimientos de otros que alcanzo a sentir la presión de su necesidad de tal manera que trato de ayudarles como pueda, sin criticar a los que no los ayuden."
+ },
+ {
+  "num": 140,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de HOSPITALIDAD",
+  "afirmacion": "Muchas personas dicen que el testimonio de nuestra familia es un ejemplo para ellos y esto los atrae a visitarnos con frecuencia."
+ },
+ {
+  "num": 141,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de LIDERAZGO",
+  "afirmacion": "Tengo la capacidad de tomar un plan grande de trabajo y distribuirlo en tal forma que otros, (que tengan la capacidad de realizarlos), lo puedan hacer en forma práctica y como equipo."
+ },
+ {
+  "num": 142,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de GOBERNAR",
+  "afirmacion": "Tengo experiencia en planificación, programación y supervisión de un programa, reevaluándolo para analizar si el mismo está cumpliendo los objetivos originales y, si no, llevar a cabo los cambios necesarios para que sí cumplan estas metas trazadas."
+ },
+ {
+  "num": 143,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de ORACION E INTERCESION",
+  "afirmacion": "He aprendido a orar con eficacia con otros y podría, eventualmente, dirigir un grupo de intercesión con nuevos creyentes."
+ },
+ {
+  "num": 144,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de CONSEJERIA",
+  "afirmacion": "Después de haber aconsejado durante muchísimas horas a distintas personas, me he dado cuenta de que el fruto que queda no es permanente y positivo sino reciben liberación y sanidad interior."
+ },
+ {
+  "num": 145,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de LIBERACION",
+  "afirmacion": "Aunque no creo que un cristiano pueda estar poseído, sí he visto a un cristiano recibir liberación de ataduras y de influencia demoníaca sobre su vida."
+ },
+ {
+  "num": 146,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de ALABANZA Y ADORACION",
+  "afirmacion": "Soy una persona gozosa y todo el día canto a mí mismo y al Señor."
+ },
+ {
+  "num": 147,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de EVANGELISMO",
+  "afirmacion": "Cuando comparto la Palabra de Dios sobre salvación, sanidad, fe victoriosa y liberación, siempre los resultados son que las personas reciben a Cristo."
+ },
+ {
+  "num": 148,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO de NINOS",
+  "afirmacion": "Me gustaría recibir clases especiales para saber cómo preparar clases bíblicas para niños y más tarde poder enseñarles."
+ },
+ {
+  "num": 149,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "DON de VISITAR",
+  "afirmacion": "Si alguien me diera una lista de las personas que deben ser visitadas, me encantaría visitarlas para compartir con ellas de Jesucristo y de la salvación.."
+ },
+ {
+  "num": 150,
+  "categoria": "Otros Dones y Ministerios",
+  "sub": "MINISTERIO del MISIONERO",
+  "afirmacion": "He tomado parte en por lo menos un viaje misionero de término corto a otro lugar. Misionero Local Nacional."
+ }
+];
+
+(function () {
+  "use strict";
+
+  const $ = (s) => document.querySelector(s);
+
+  const ETIQUETAS = { "5 Ministerios de Jesucristo": "Los 5 Ministerios de Jes\u00fas", "Otros Dones y Ministerios": "Otros Dones y Ministerios", "Otros dones": "Otros dones", "Otros ministerios": "Otros ministerios" };
+  const etiquetaCategoria = (cat) => ETIQUETAS[cat] || ("Los " + cat);
+
+  function formatearLeyenda9Dones(sub) {
+    const up = sub.toUpperCase();
+    if (up.includes("PALABRA") && up.includes("SABIDURIA")) return "PALABRA DE SABIDUR\u00cdA";
+    if (up.includes("PALABRA") && up.includes("REVELACION")) return "PALABRA DE REVELACI\u00d3N";
+    return sub.replace(/^DON de /i, "").replace(/^DONES de /i, "").replace(/^DON del /i, "");
+  }
+
+  const ORDEN_FIJO = {};
+  DATOS.forEach((d) => {
+    let catKey = d.categoria;
+    if (catKey === "Otros Dones y Ministerios") {
+      catKey = d.sub.toUpperCase().trim().startsWith("DON") ? "Otros dones" : "Otros ministerios";
+    }
+    if (!ORDEN_FIJO[catKey]) ORDEN_FIJO[catKey] = [];
+    if (!ORDEN_FIJO[catKey].includes(d.sub)) ORDEN_FIJO[catKey].push(d.sub);
+  });
+
+  const OPCIONES = [
+    { valor: 3, etiqueta: "Mucho" },
+    { valor: 2, etiqueta: "Algo" },
+    { valor: 1, etiqueta: "Poco" },
+    { valor: 0, etiqueta: "Nada" }
+  ];
+
+  let preguntas = [];
+  let respuestas = [];
+  let indice = 0;
+  let nombre = "";
+  let email = "";
+  let testSeleccionado = "";
+
+  const VISTAS = ["inicio", "datos", "test", "resultados"];
+  function mostrarVista(id) {
+    VISTAS.forEach((v) => $("#vista-" + v).classList.toggle("activa", v === id));
+    window.scrollTo(0, 0);
+  }
+
+  /* ---- Tema claro/oscuro ---- */
+  function aplicarTema(t) {
+    document.documentElement.dataset.tema = t;
+    localStorage.setItem("tema", t);
+  }
+  document.getElementById("btn-tema").addEventListener("click", () => {
+    aplicarTema(document.documentElement.dataset.tema === "oscuro" ? "claro" : "oscuro");
+  });
+  aplicarTema(localStorage.getItem("tema") || "claro");
+
+  // ---- Supabase ----
+  const SUPABASE_URL = "https://xstrpgjvflpajgcbzsai.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzdHJwZ2p2ZmxwYWpnY2J6c2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0MDU5MjYsImV4cCI6MjEwNDk4MTkyNn0.hynO7EE8zSTznCiUJ-9VwCrtLOu50kw_qIKn4pLiG4M"; // Project Settings > API > anon public
+  const supabaseClient = (window.supabase && SUPABASE_ANON_KEY) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+  async function guardarResultado() {
+    const email_norm = email.trim().toLowerCase();
+    const puntajes = {};
+    Object.keys(cachePorCategoria || {}).forEach((cat) => {
+      puntajes[cat] = cachePorCategoria[cat].map((g) => ({ sub: g.sub, total: g.total, max: g.max }));
+    });
+    const payload = {
+      nombre: nombre.trim(),
+      email: email.trim(),
+      email_norm,
+      test_tipo: testSeleccionado,
+      respuestas: [...respuestas],
+      puntajes
+    };
+    if (!supabaseClient) {
+      const hist = JSON.parse(localStorage.getItem("historial") || "[]");
+      hist.push({ ...payload, fecha: new Date().toISOString() });
+      localStorage.setItem("historial", JSON.stringify(hist));
+      return;
+    }
+    try {
+      await supabaseClient.from("personas").upsert({ nombre: nombre.trim(), email_norm }, { onConflict: "email_norm" });
+      const { data: persona } = await supabaseClient.from("personas").select("id").eq("email_norm", email_norm).single();
+      const persona_id = persona ? persona.id : null;
+      await supabaseClient.from("resultados").insert({ persona_id, ...payload });
+    } catch (e) {
+      console.error("Supabase error, fallback localStorage", e);
+      const hist = JSON.parse(localStorage.getItem("historial") || "[]");
+      hist.push({ ...payload, fecha: new Date().toISOString() });
+      localStorage.setItem("historial", JSON.stringify(hist));
+    }
+  }
+
+  /* ---- Inicio ---- */
+  document.getElementById("btn-iniciar").addEventListener("click", () => {
+    construirOpciones();
+    mostrarVista("datos");
+  });
+
+  /* ---- Datos ---- */
+  function construirOpciones() {
+    const cont = document.getElementById("opciones-test");
+    cont.innerHTML = "";
+    const cats = [];
+    DATOS.forEach((d) => { if (!cats.includes(d.categoria)) cats.push(d.categoria); });
+    cats.forEach((cat) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "tarjeta-test";
+      b.dataset.test = cat;
+      b.innerHTML = '<span class="tarjeta-nombre">' + etiquetaCategoria(cat) + '</span>';
+      b.addEventListener("click", () => seleccionarTarjeta(b));
+      cont.appendChild(b);
+    });
+    const bCompleto = document.createElement("button");
+    bCompleto.type = "button";
+    bCompleto.className = "tarjeta-test";
+    bCompleto.dataset.test = "COMPLETO";
+    bCompleto.innerHTML = '<span class="tarjeta-nombre">Test Completo</span>';
+    bCompleto.addEventListener("click", () => seleccionarTarjeta(bCompleto));
+    cont.appendChild(bCompleto);
+  }
+
+  function seleccionarTarjeta(tarjeta) {
+    document.querySelectorAll(".tarjeta-test").forEach((t) => t.classList.toggle("seleccionada", t === tarjeta));
+    testSeleccionado = tarjeta.dataset.test;
+    document.getElementById("error-test").classList.add("oculto");
+  }
+
+  function seededRandom(seed) {
+    let s = seed % 2147483647;
+    if (s <= 0) s += 2147483646;
+    return function() {
+      s = (s * 16807) % 2147483647;
+      return (s - 1) / 2147483646;
+    };
+  }
+
+  function mezclarCompleto(datos) {
+    const porCat = {
+      "Otros dones": [],
+      "9 Dones del Esp\u00edritu Santo": [],
+      "Otros ministerios": [],
+      "5 Ministerios de Jesucristo": []
+    };
+    datos.forEach((d) => {
+      let catKey = d.categoria;
+      if (d.categoria === "Otros Dones y Ministerios") {
+        catKey = d.sub.toUpperCase().trim().startsWith("DON") ? "Otros dones" : "Otros ministerios";
+      }
+      if (!porCat[catKey]) porCat[catKey] = [];
+      porCat[catKey].push(d);
+    });
+    const rng = seededRandom(20250824);
+    Object.keys(porCat).forEach((cat) => {
+      const arr = porCat[cat];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+      }
+    });
+    const resultado = [];
+    let ultimoCat = null;
+    while (Object.values(porCat).some((a) => a.length > 0)) {
+      let candidatos = Object.keys(porCat).filter((c) => porCat[c].length > 0 && c !== ultimoCat);
+      if (candidatos.length === 0) {
+        candidatos = Object.keys(porCat).filter((c) => porCat[c].length > 0);
+      }
+      candidatos.sort((a, b) => porCat[b].length - porCat[a].length || a.localeCompare(b));
+      const elegido = candidatos[0];
+      const item = porCat[elegido].shift();
+      resultado.push(item);
+      ultimoCat = elegido;
+    }
+    return resultado;
+  }
+
+  document.getElementById("btn-comenzar").addEventListener("click", () => {
+    nombre = document.getElementById("input-nombre").value.trim();
+    email = document.getElementById("input-email").value.trim();
+    let ok = true;
+    if (!nombre) {
+      document.getElementById("error-nombre").classList.remove("oculto");
+      ok = false;
+    } else {
+      document.getElementById("error-nombre").classList.add("oculto");
+    }
+    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!email || !emailValido) {
+      document.getElementById("error-email").classList.remove("oculto");
+      ok = false;
+    } else {
+      document.getElementById("error-email").classList.add("oculto");
+    }
+    if (!testSeleccionado) {
+      document.getElementById("error-test").classList.remove("oculto");
+      ok = false;
+    } else {
+      document.getElementById("error-test").classList.add("oculto");
+    }
+    if (!ok) return;
+
+    preguntas = testSeleccionado === "COMPLETO"
+      ? mezclarCompleto(DATOS)
+      : DATOS.filter((d) => d.categoria === testSeleccionado);
+    respuestas = new Array(preguntas.length).fill(null);
+    indice = 0;
+    renderPregunta();
+    mostrarVista("test");
+  });
+
+  /* ---- Preguntas ---- */
+  function renderPregunta() {
+    const p = preguntas[indice];
+    document.getElementById("pregunta-num").textContent = "Pregunta " + (indice + 1) + " de " + preguntas.length;
+    document.getElementById("progreso-barra").style.width = (((indice + 1) / preguntas.length) * 100) + "%";
+    document.getElementById("afirmacion").textContent = p.afirmacion;
+
+    const cont = document.getElementById("botones-respuesta");
+    cont.innerHTML = "";
+    OPCIONES.forEach((op) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "btn-respuesta" + (respuestas[indice] === op.valor ? " seleccionada" : "");
+      b.textContent = op.etiqueta;
+      b.dataset.valor = op.valor;
+      b.addEventListener("click", () => seleccionarRespuesta(op.valor));
+      cont.appendChild(b);
+    });
+
+    document.getElementById("btn-siguiente").disabled = respuestas[indice] === null;
+    document.getElementById("btn-volver").disabled = indice === 0;
+
+    const card = document.getElementById("pregunta-card");
+    card.classList.remove("animar");
+    void card.offsetWidth;
+    card.classList.add("animar");
+  }
+
+  function seleccionarRespuesta(v) {
+    respuestas[indice] = v;
+    document.querySelectorAll(".btn-respuesta").forEach((b) => {
+      b.classList.toggle("seleccionada", Number(b.dataset.valor) === v);
+    });
+    document.getElementById("btn-siguiente").disabled = false;
+  }
+
+  document.getElementById("btn-siguiente").addEventListener("click", () => {
+    if (respuestas[indice] === null) return;
+    if (indice < preguntas.length - 1) {
+      indice++;
+      renderPregunta();
+    } else {
+      mostrarResultados();
+    }
+  });
+
+  document.getElementById("btn-volver").addEventListener("click", () => {
+    if (indice > 0) {
+      indice--;
+      renderPregunta();
+    }
+  });
+
+  /* ---- Resultados ---- */
+  let cachePorCategoria = null;
+
+  function acortarSub(sub) {
+    const up = sub.toUpperCase();
+    if (up.includes("PALABRA") && up.includes("SABIDURIA")) return "PALABRA DE SABIDUR\u00cdA";
+    if (up.includes("PALABRA") && up.includes("REVELACION")) return "PALABRA DE REVELACI\u00d3N";
+    return sub.replace(/^DON de /i,"").replace(/^DONES de /i,"").replace(/^MINISTERIO del /i,"").replace(/^MINISTERIO de /i,"").replace(/^DON del /i,"");
+  }
+
+  function renderRadar(cat, datos) {
+    const n = datos.length; const cx = 180, cy = 180, R = 125;
+    let svg = '<svg viewBox="0 0 360 360" class="svg-radar" role="img" aria-label="Radar ' + cat + '">';
+    for (let g = 1; g <= 15; g++) {
+      const r = R * g / 15;
+      const isMajor = g % 5 === 0;
+      svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="var(--borde)" stroke-width="' + (isMajor ? 1 : 0.6) + '" opacity="' + (isMajor ? 0.55 : 0.22) + '"/>';
+      if (isMajor) {
+        svg += '<text x="' + (cx + 4) + '" y="' + (cy - r - 2) + '" font-size="7.5" font-weight="600" fill="#000000" opacity="1">' + g + "</text>";
+      }
+    }
+    datos.forEach((d, i) => {
+      const ang = (-90 + i * 360 / n) * Math.PI / 180;
+      const x2 = cx + R * Math.cos(ang);
+      const y2 = cy + R * Math.sin(ang);
+      svg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + x2 + '" y2="' + y2 + '" stroke="var(--borde)" stroke-width="1" opacity="0.3"/>';
+    });
+    const ceros = datos.filter((d) => d.total === 0).length;
+    const usarFiltro = ceros >= 2;
+    const activos = usarFiltro ? datos.filter((d) => d.total >= 1) : datos;
+    if (activos.length >= 2) {
+      const pts = activos.map((d) => {
+        const i = datos.findIndex((x) => x.sub === d.sub);
+        const ang = (-90 + i * 360 / n) * Math.PI / 180;
+        const r = R * (d.total / d.max || 0);
+        return (cx + r * Math.cos(ang)) + "," + (cy + r * Math.sin(ang));
+      }).join(" ");
+      svg += '<polygon points="' + pts + '" fill="rgba(63,109,240,0.18)" stroke="#3f6df0" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+    } else if (!usarFiltro && datos.length >= 2) {
+      const pts = datos.map((d, i) => {
+        const ang = (-90 + i * 360 / n) * Math.PI / 180;
+        const r = R * (d.total / d.max || 0);
+        return (cx + r * Math.cos(ang)) + "," + (cy + r * Math.sin(ang));
+      }).join(" ");
+      svg += '<polygon points="' + pts + '" fill="rgba(63,109,240,0.18)" stroke="#3f6df0" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+    }
+    const puntosParaDibujar = usarFiltro ? activos : datos;
+    puntosParaDibujar.forEach((d) => {
+      const i = datos.findIndex((x) => x.sub === d.sub);
+      const ang = (-90 + i * 360 / n) * Math.PI / 180;
+      const r = R * (d.total / d.max || 0);
+      const x = cx + r * Math.cos(ang);
+      const y = cy + r * Math.sin(ang);
+      const col = 'hsl(' + Math.round(i * 360 / n) + ', 72%, 52%)';
+      svg += '<circle cx="' + x + '" cy="' + y + '" r="4.5" fill="' + col + '" stroke="#fff" stroke-width="1.6"/>';
+    });
+    datos.forEach((d, i) => {
+      const ang = (-90 + i * 360 / n) * Math.PI / 180;
+      const x = cx + (R + 18) * Math.cos(ang);
+      const y = cy + (R + 18) * Math.sin(ang);
+      const anchor = Math.cos(ang) > 0.35 ? "start" : Math.cos(ang) < -0.35 ? "end" : "middle";
+      const label = acortarSub(d.sub);
+      const fs = n > 12 ? "6.9" : "7.8";
+      const needsWrap = label.length > 14 || label.includes(" Y ") || label.includes(" E ");
+      if (needsWrap) {
+        let parts;
+        if (label.includes(" Y ")) { const p = label.split(" Y "); parts = [p[0], "Y " + p.slice(1).join(" Y ")]; }
+        else if (label.includes(" E ")) { const p = label.split(" E "); parts = [p[0], "E " + p.slice(1).join(" E ")]; }
+        else {
+          const mid = Math.floor(label.length / 2);
+          let sp = label.lastIndexOf(" ", mid);
+          if (sp === -1) sp = label.indexOf(" ", mid);
+          if (sp !== -1) parts = [label.slice(0, sp), label.slice(sp + 1)];
+          else parts = [label];
+        }
+        if (parts.length === 2) {
+          svg += '<text x="' + x + '" y="' + y + '" text-anchor="' + anchor + '" font-size="' + fs + '" font-weight="600" fill="var(--texto)">';
+          svg += '<tspan x="' + x + '" dy="-0.45em">' + parts[0] + "</tspan>";
+          svg += '<tspan x="' + x + '" dy="1.15em">' + parts[1] + "</tspan>";
+          svg += "</text>";
+        } else {
+          svg += '<text x="' + x + '" y="' + y + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="' + fs + '" font-weight="600" fill="var(--texto)">' + label + "</text>";
+        }
+      } else {
+        svg += '<text x="' + x + '" y="' + y + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="' + fs + '" font-weight="600" fill="var(--texto)">' + label + "</text>";
+      }
+    });
+    svg += "</svg>";
+    let html = '<div class="grafico-bloque" data-cat="' + cat + '"><h3>' + etiquetaCategoria(cat) + '</h3><div class="grafico-contenedor">' + svg + '<div class="leyenda-radar">';
+    const ordenadosLeyenda = [...datos].sort((a, b) => b.total - a.total);
+    ordenadosLeyenda.forEach((d, idxSorted) => {
+      const principal = idxSorted === 0 ? " principal" : "";
+      const fixedIdx = datos.findIndex((x) => x.sub === d.sub);
+      const dotBg = 'hsl(' + Math.round(fixedIdx * 360 / datos.length) + ', 72%, 52%)';
+      const textoSub = cat === "9 Dones del Esp\u00edritu Santo" ? formatearLeyenda9Dones(d.sub) : d.sub;
+      html += '<span class="leyenda-item' + principal + '"><span class="leyenda-punto" style="background:' + dotBg + '"></span>' + textoSub + ' <b>' + d.total + "/" + d.max + "</b></span>";
+    });
+    html += "</div></div></div>";
+    return html;
+  }
+
+  function mostrarResultados() {
+    const porCategoria = {};
+    preguntas.forEach((p, i) => {
+      const v = respuestas[i] == null ? 0 : respuestas[i];
+      let catKey = p.categoria;
+      if (p.categoria === "Otros Dones y Ministerios") {
+        catKey = p.sub.toUpperCase().trim().startsWith("DON") ? "Otros dones" : "Otros ministerios";
+      }
+      if (!porCategoria[catKey]) porCategoria[catKey] = [];
+      let grupo = porCategoria[catKey].find((g) => g.sub === p.sub);
+      if (!grupo) {
+        grupo = { sub: p.sub, total: 0, max: 0 };
+        porCategoria[catKey].push(grupo);
+      }
+      grupo.total += v;
+      grupo.max += 3;
+    });
+    cachePorCategoria = porCategoria;
+    document.getElementById("resultado-nombre").textContent = nombre;
+    const perfilMap = {
+      "9 Dones del EspÃ­ritu Santo": "este es tu perfil de los 9 Dones del EspÃ­ritu Santo",
+      "5 Ministerios de Jesucristo": "este es tu perfil de los 5 Ministerios de Jesucristo",
+      "Otros Dones y Ministerios": "este es tu perfil de Otros Dones y Ministerios",
+      "COMPLETO": "este es tu perfil de Dones y Ministerios"
+    };
+    document.getElementById("resultado-perfil").textContent = perfilMap[testSeleccionado] || "este es tu perfil de dones y ministerios:";
+    guardarResultado();
+    const cont = document.getElementById("resultado-lista");
+    const selector = document.getElementById("selector-categorias");
+    cont.innerHTML = "";
+    selector.innerHTML = "";
+    const esCompleto = testSeleccionado === "COMPLETO";
+    let cats;
+    if (esCompleto) {
+      const ordenCompleto = ["5 Ministerios de Jesucristo", "9 Dones del Esp\u00edritu Santo", "Otros dones", "Otros ministerios"];
+      cats = ordenCompleto.filter((c) => porCategoria[c]);
+      if (cats.length === 0) cats = Object.keys(porCategoria);
+    } else {
+      if (porCategoria["Otros dones"] && porCategoria["Otros ministerios"]) {
+        cats = ["Otros dones", "Otros ministerios"];
+      } else {
+        cats = Object.keys(porCategoria);
+      }
+    }
+    if (esCompleto && cats.length > 1) {
+      selector.classList.remove("oculto");
+      cats.forEach((cat, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = etiquetaCategoria(cat);
+        btn.dataset.cat = cat;
+        if (idx === 0) btn.classList.add("activo");
+        selector.appendChild(btn);
+      });
+    } else {
+      selector.classList.add("oculto");
+    }
+    cats.forEach((cat) => {
+      const grupos = porCategoria[cat];
+      const fijos = (ORDEN_FIJO[cat] || []).map((sub) => grupos.find((g) => g.sub === sub)).filter(Boolean);
+      const datosParaRadar = fijos.length === grupos.length ? fijos : grupos;
+      cont.insertAdjacentHTML("beforeend", renderRadar(cat, datosParaRadar));
+    });
+    if (esCompleto && cats.length > 1) {
+      const bloques = cont.querySelectorAll(".grafico-bloque");
+      bloques.forEach((b, i) => { if (i !== 0) b.classList.add("oculto"); });
+      selector.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          selector.querySelectorAll("button").forEach((b) => b.classList.toggle("activo", b === btn));
+          const catSel = btn.dataset.cat;
+          cont.querySelectorAll(".grafico-bloque").forEach((bloque) => {
+            bloque.classList.toggle("oculto", bloque.dataset.cat !== catSel);
+          });
+        });
+      });
+    }
+    mostrarVista("resultados");
+  }
+
+  document.getElementById("btn-pdf").addEventListener("click", () => window.print());
+
+  document.getElementById("btn-reiniciar").addEventListener("click", () => {
+    preguntas = [];
+    respuestas = [];
+    indice = 0;
+    nombre = "";
+    email = "";
+    testSeleccionado = "";
+    document.getElementById("input-nombre").value = "";
+    const emailInput = document.getElementById("input-email");
+    if (emailInput) emailInput.value = "";
+    document.querySelectorAll(".tarjeta-test").forEach((t) => t.classList.remove("seleccionada"));
+    mostrarVista("inicio");
+  });
+})();
+</script>
+</body>
+</html>
