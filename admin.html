@@ -46,8 +46,8 @@
   <div id="vista-login" class="card">
     <h1>Acceso Admin</h1>
     <p style="text-align:center;color:var(--texto-suave);margin-bottom:16px">Ingresá con tu usuario y contraseña</p>
-    <div class="campo"><label for="login-email">Usuario</label><input id="login-email" type="text" placeholder="admin"></div>
-    <div class="campo" style="margin-top:10px"><label for="login-pass">Contraseña</label><input id="login-pass" type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"></div>
+    <div class="campo"><label for="login-email">Usuario</label><input id="login-email" type="text" placeholder="admin" value="" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    <div class="campo" style="margin-top:10px"><label for="login-pass">Contraseña</label><input id="login-pass" type="password" placeholder="••••••••" value="" autocomplete="new-password"></div>
     <p id="login-error" class="error oculto"></p>
     <div style="text-align:center;margin-top:16px"><button id="btn-login" class="btn-primario">Ingresar</button></div>
   </div>
@@ -151,6 +151,8 @@ $("#btn-logout").addEventListener("click", async ()=>{
   $("#vista-admin").classList.add("oculto");
   $("#vista-login").classList.remove("oculto");
   $("#btn-logout").classList.add("oculto");
+  document.getElementById("login-email").value = "";
+  document.getElementById("login-pass").value = "";
 });
 
 $("#busqueda").addEventListener("input", ()=> renderPersonas(resultadosCache));
@@ -164,6 +166,10 @@ $("#btn-export").addEventListener("click", ()=>{
   const a = document.createElement("a"); a.href=url; a.download="historial.csv"; a.click();
   URL.revokeObjectURL(url);
 });
+
+// Asegurar campos vacíos al cargar (evita autocompletado del navegador)
+document.getElementById("login-email").value = "";
+document.getElementById("login-pass").value = "";
 
 checkSession();
 </script>
