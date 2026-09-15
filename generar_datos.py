@@ -351,54 +351,51 @@ PLANTILLA = r"""<!DOCTYPE html>
 
   /* ---- Impresion ---- */
   @media print {
-    @page { margin: 12mm 10mm; }
-    body { background: #ffffff; padding: 0; color: #000000; }
-    body * { visibility: hidden; }
-    .resultado-imprimible, .resultado-imprimible * { visibility: visible; }
+    @page { margin: 10mm 10mm; }
+    body { background: #ffffff !important; padding: 0 !important; color: #000000 !important; }
+    header, #vista-inicio, #vista-datos, #vista-test, .no-print { display: none !important; }
+    #vista-resultados { display: block !important; }
     .resultado-imprimible {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      border: none;
-      box-shadow: none;
-      padding: 0;
+      display: block !important;
+      position: static !important;
+      width: 100% !important;
+      max-width: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
       background: transparent !important;
       color: #000000 !important;
     }
-    .resultado-imprimible h2 { font-size: 1.3rem !important; margin-bottom: 6px !important; }
-    .resultado-imprimible .resultado-saludo { font-size: 0.88rem !important; margin: 4px 0 10px !important; }
-    .resultado-imprimible .grafico-bloque h3 { color: #3f6df0 !important; font-size: 1rem !important; margin-bottom: 8px !important; padding-bottom: 6px !important; }
+    .resultado-imprimible h2 { font-size: 1.35rem !important; margin-bottom: 8px !important; }
+    .resultado-imprimible .resultado-saludo { font-size: 0.9rem !important; margin: 6px 0 14px !important; }
+    .resultado-imprimible .grafico-bloque h3 { font-size: 1.05rem !important; margin-bottom: 10px !important; padding-bottom: 6px !important; }
     .resultado-imprimible h2,
     .resultado-imprimible .resultado-saludo,
     .resultado-imprimible .grafico-bloque h3,
     .resultado-imprimible #resultado-nombre { color: #000000 !important; }
     .resultado-imprimible .grafico-bloque h3 { color: #3f6df0 !important; }
-    .resultado-imprimible .leyenda-item { background: #eef2ff !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 0.74rem !important; padding: 3px 8px !important; }
+    .resultado-imprimible .leyenda-item { background: #eef2ff !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 0.78rem !important; padding: 4px 9px !important; }
     .resultado-imprimible .leyenda-item.principal { background: #3f6df0 !important; color: #fff !important; }
-    .resultado-imprimible .leyenda-item b { background: #fff !important; color: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 0.74rem !important; }
+    .resultado-imprimible .leyenda-item b { background: #fff !important; color: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .resultado-imprimible .leyenda-item.principal b { background: #fff !important; color: #3f6df0 !important; }
-    .resultado-imprimible .grafico-contenedor { gap: 8px !important; }
-    .resultado-imprimible svg { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 360px !important; }
+    .resultado-imprimible .grafico-contenedor { gap: 10px !important; }
+    .resultado-imprimible svg { -webkit-print-color-adjust: exact; print-color-adjust: exact; max-width: 500px !important; }
     .resultado-imprimible svg text { fill: #000000 !important; }
-    .grafico-bloque.oculto { display: block !important; visibility: visible !important; }
+    .grafico-bloque.oculto { display: block !important; }
     .pdf-membrete {
       display: block !important;
-      visibility: visible !important;
       text-align: center;
       font-weight: 800;
-      font-size: 0.95rem !important;
+      font-size: 1rem !important;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: #000000 !important;
-      margin-bottom: 10px !important;
-      padding-bottom: 8px !important;
+      margin-bottom: 12px !important;
+      padding-bottom: 10px !important;
       border-bottom: 2px solid #3f6df0;
     }
-    .grafico-bloque { break-inside: avoid; page-break-inside: avoid; margin-bottom: 12px !important; }
+    .grafico-bloque { break-inside: avoid; page-break-inside: avoid; margin-bottom: 16px !important; }
     .grafico-bloque:not(:last-child) { break-after: page; page-break-after: always; }
-    .no-print { display: none !important; }
-    header { display: none; }
   }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
